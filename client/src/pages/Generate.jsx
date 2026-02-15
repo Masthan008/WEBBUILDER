@@ -27,7 +27,7 @@ const CODE_SNIPPETS = [
 
 const AI_MODELS = [
     { id: "openrouter", name: "OpenRouter", model: "DeepSeek Chat", recommended: true },
-    { id: "gemini", name: "Google Gemini", model: "Gemini 2.5 Flash" },
+    { id: "chatgpt", name: "ChatGPT", model: "GPT-4o Mini" },
     { id: "groq", name: "Groq", model: "Llama 3.3 70B" },
     { id: "nvidia", name: "NVIDIA DeepSeek", model: "DeepSeek v3.1 Terminus" }
 ]
@@ -42,6 +42,7 @@ function Generate() {
     const [selectedModel, setSelectedModel] = useState("openrouter")
     const [showModelDropdown, setShowModelDropdown] = useState(false)
     const [codeSnippet, setCodeSnippet] = useState("")
+    const [codeType, setCodeType] = useState("html") // "html" or "fullstack"
     
     const handleGenerateWebsite = async () => {
         setLoading(true)
@@ -50,7 +51,8 @@ function Generate() {
         try {
             const result = await axios.post(`${serverUrl}/api/website/generate`, { 
                 prompt, 
-                provider: selectedModel 
+                provider: selectedModel,
+                codeType: codeType
             }, { withCredentials: true })
             
             console.log('Generation successful:', result.data)
@@ -160,6 +162,39 @@ function Generate() {
                     </p>
 
                 </motion.div>
+                
+                {/* Code Type Selector */}
+                <div className='mb-6'>
+                    <label className='text-sm text-zinc-400 mb-2 block'>Code Type</label>
+                    <div className='flex gap-3'>
+                        <button
+                            onClick={() => setCodeType("html")}
+                            className={`flex-1 px-6 py-4 rounded-xl border transition ${
+                                codeType === "html"
+                                    ? 'bg-white/10 border-white/30 text-white'
+                                    : 'bg-black/60 border-white/10 text-zinc-400 hover:border-white/20'
+                            }`}
+                        >
+                            <div className='text-left'>
+                                <div className='text-sm font-medium mb-1'>HTML Only</div>
+                                <div className='text-xs text-zinc-500'>Pure HTML, CSS & JavaScript</div>
+                            </div>
+                        </button>
+                        <button
+                            onClick={() => setCodeType("fullstack")}
+                            className={`flex-1 px-6 py-4 rounded-xl border transition ${
+                                codeType === "fullstack"
+                                    ? 'bg-white/10 border-white/30 text-white'
+                                    : 'bg-black/60 border-white/10 text-zinc-400 hover:border-white/20'
+                            }`}
+                        >
+                            <div className='text-left'>
+                                <div className='text-sm font-medium mb-1'>Full Stack</div>
+                                <div className='text-xs text-zinc-500'>Frontend + Backend code</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
                 
                 {/* AI Model Selector */}
                 <div className='mb-6'>

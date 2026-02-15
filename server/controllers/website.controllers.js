@@ -151,16 +151,100 @@ ABSOLUTE RULES
 - IF FORMAT IS BROKEN → RESPONSE IS INVALID
 `;
 
+const fullStackPrompt = `
+YOU ARE A SENIOR FULL-STACK ARCHITECT
+SPECIALIZED IN BUILDING COMPLETE WEB APPLICATIONS.
+
+YOU BUILD PRODUCTION-READY FULL-STACK APPLICATIONS
+WITH FRONTEND AND BACKEND CODE.
+
+--------------------------------------------------
+USER REQUIREMENT:
+{USER_PROMPT}
+--------------------------------------------------
+
+FULL-STACK REQUIREMENTS
+--------------------------------------------------
+YOU MUST PROVIDE:
+
+1. FRONTEND (HTML/CSS/JavaScript)
+   - Responsive design (mobile, tablet, desktop)
+   - Modern UI with smooth interactions
+   - Form validation
+   - API integration code
+   - Error handling
+
+2. BACKEND (Node.js/Express)
+   - RESTful API endpoints
+   - Request validation
+   - Error handling middleware
+   - CORS configuration
+   - Environment variable setup
+
+3. DATABASE SCHEMA (if needed)
+   - MongoDB/PostgreSQL schema
+   - Sample data structure
+   - Relationships
+
+4. API DOCUMENTATION
+   - Endpoint descriptions
+   - Request/Response examples
+   - Authentication requirements
+
+--------------------------------------------------
+TECHNICAL STACK
+--------------------------------------------------
+Frontend: HTML, CSS, JavaScript (Vanilla or specify framework)
+Backend: Node.js + Express
+Database: MongoDB or PostgreSQL (based on requirements)
+Authentication: JWT (if needed)
+
+--------------------------------------------------
+CODE STRUCTURE
+--------------------------------------------------
+Provide complete, working code for:
+- Frontend HTML file
+- Backend server.js
+- API routes
+- Database models
+- Configuration files
+- Setup instructions
+
+--------------------------------------------------
+OUTPUT FORMAT (RAW JSON ONLY)
+--------------------------------------------------
+{
+  "message": "Brief description of the full-stack application",
+  "code": "COMPLETE FRONTEND HTML CODE HERE",
+  "backend": "COMPLETE BACKEND CODE HERE (server.js)",
+  "database": "DATABASE SCHEMA/MODELS HERE",
+  "setup": "SETUP INSTRUCTIONS HERE"
+}
+
+--------------------------------------------------
+ABSOLUTE RULES
+--------------------------------------------------
+- RETURN RAW JSON ONLY
+- NO markdown code blocks
+- NO explanations outside JSON
+- ALL code must be production-ready
+- Include error handling
+- Add comments for clarity
+- FORMAT MUST MATCH EXACTLY
+`;
+
+
 
 export const generateWebsite = async (req, res) => {
     try {
         console.log('Generate website request received:', {
             provider: req.body.provider,
+            codeType: req.body.codeType,
             promptLength: req.body.prompt?.length,
             userId: req.user?._id
         })
         
-        const { prompt, provider = "openrouter" } = req.body
+        const { prompt, provider = "openrouter", codeType = "html" } = req.body
         if (!prompt) {
             return res.status(400).json({ message: "prompt is required" })
         }
@@ -173,9 +257,13 @@ export const generateWebsite = async (req, res) => {
             return res.status(400).json({ message: "you have not enough credits to generate a webiste" })
         }
 
-        console.log(`Starting generation with ${provider} for user ${user._id}`)
+        console.log(`Starting generation with ${provider} for user ${user._id}, codeType: ${codeType}`)
 
-        const finalPrompt = masterPrompt.replace("USER_PROMPT", prompt)
+        // Choose the appropriate prompt based on code type
+        const finalPrompt = codeType === "fullstack" 
+            ? fullStackPrompt.replace("{USER_PROMPT}", prompt)
+            : masterPrompt.replace("USER_PROMPT", prompt)
+        
         let raw = ""
         let parsed = null
         for (let i = 0; i < 2 && !parsed; i++) {
