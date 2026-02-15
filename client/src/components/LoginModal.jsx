@@ -16,7 +16,13 @@ const dispatch=useDispatch()
                 email:result.user.email,
                 avatar:result.user.photoURL
             },{withCredentials:true})
-            dispatch(setUserData(data))
+            
+            // Store token in localStorage as fallback for Safari
+            if (data.token) {
+                localStorage.setItem('token', data.token)
+            }
+            
+            dispatch(setUserData(data.user || data))
             onClose()
         } catch (error) {
             console.log(error)
