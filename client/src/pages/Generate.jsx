@@ -1,7 +1,7 @@
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ChevronDown } from 'lucide-react'
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from "motion/react"
+import { motion, AnimatePresence } from "motion/react"
 import { useState } from 'react'
 import axios from "axios"
 import { serverUrl } from '../App'
@@ -13,6 +13,14 @@ const PHASES = [
     "Adding animations & interactions…",
     "Final quality checks…",
 ];
+
+const AI_MODELS = [
+    { id: "openrouter", name: "OpenRouter", model: "DeepSeek Chat", recommended: true },
+    { id: "gemini", name: "Google Gemini", model: "Gemini 1.5 Flash" },
+    { id: "groq", name: "Groq", model: "Llama 3.3 70B" },
+    { id: "nvidia", name: "NVIDIA Kimi", model: "Kimi K2.5" }
+]
+
 function Generate() {
     const navigate = useNavigate()
     const [prompt, setPrompt] = useState("")
@@ -20,10 +28,16 @@ function Generate() {
     const [progress, setProgress] = useState(0)
     const [phaseIndex, setPhaseIndex] = useState(0)
     const [error,setError]=useState("")
+    const [selectedModel, setSelectedModel] = useState("openrouter")
+    const [showModelDropdown, setShowModelDropdown] = useState(false)
+    
     const handleGenerateWebsite = async () => {
         setLoading(true)
         try {
-            const result = await axios.post(`${serverUrl}/api/website/generate`, { prompt }, { withCredentials: true })
+            const result = await axios.post(`${serverUrl}/api/website/generate`, { 
+                prompt, 
+                provider: selectedModel 
+            }, { withCredentials: true })
             console.log(result)
             setProgress(100)
             setLoading(false)
@@ -67,6 +81,8 @@ function Generate() {
         return () => clearInterval(interval)
     }, [loading])
 
+    const selectedModelData = AI_MODELS.find(m => m.id === selectedModel)
+
     return (
         <div className='min-h-screen bg-linear-to-br from-[#050505] via-[#0b0b0b] to-[#050505] text-white'>
             <div className='sticky top-0 z-40 backdrop-blur-xl bg-black/50 border-b border-white/10'>
@@ -95,6 +111,67 @@ function Generate() {
                     </p>
 
                 </motion.div>
+                
+                {/* AI Model Selector */}
+                <div className='mb-6'>
+                    <label className='text-sm text-zinc-400 mb-2 block'>AI Model</label>
+                    <div className='relative'>
+                        <button
+                            onClick={() => setShowModelDropdown(!showModelDropdown)}
+                            className='w-full md:w-auto px-6 py-3 rounded-xl bg-black/60 border border-white/10 flex items-center justify-between gap-4 hover:border-white/20 transition'
+                        >
+                            <div className='flex items-center gap-3'>
+                                <div className='w-2 h-2 rounded-full bg-green-400'></div>
+                                <div className='text-left'>
+                                    <div className='text-sm font-medium'>{selectedModelData.name}</div>
+                                    <div className='text-xs text-zinc-500'>{selectedModelData.model}</div>
+                                </div>
+                                {selectedModelData.recommended && (
+                                    <span className='px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-xs'>Recommended</span>
+                                )}
+                            </div>
+                            <ChevronDown size={16} className='text-zinc-400' />
+                        </button>
+
+                        <AnimatePresence>
+                            {showModelDropdown && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    className='absolute top-full mt-2 w-full md:w-96 bg-black/95 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden z-50'
+                                >
+                                    {AI_MODELS.map((model) => (
+                                        <button
+                                            key={model.id}
+                                            onClick={() => {
+                                                setSelectedModel(model.id)
+                                                setShowModelDropdown(false)
+                                            }}
+                                            className={`w-full px-6 py-4 flex items-center gap-3 hover:bg-white/5 transition ${
+                                                selectedModel === model.id ? 'bg-white/10' : ''
+                                            }`}
+                                        >
+                                            <div className={`w-2 h-2 rounded-full ${
+                                                selectedModel === model.id ? 'bg-green-400' : 'bg-zinc-600'
+                                            }`}></div>
+                                            <div className='flex-1 text-left'>
+                                                <div className='text-sm font-medium flex items-center gap-2'>
+                                                    {model.name}
+                                                    {model.recommended && (
+                                                        <span className='px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-xs'>Recommended</span>
+                                                    )}
+                                                </div>
+                                                <div className='text-xs text-zinc-500'>{model.model}</div>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </div>
+
                 <div className='mb-14'>
                     <h1 className='text-xl font-semibold mb-2'>Describe your website</h1>
                     <div className='relative'>

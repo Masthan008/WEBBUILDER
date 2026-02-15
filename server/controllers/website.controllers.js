@@ -1,4 +1,4 @@
-import { generateResponse } from "../config/openRouter.js";
+import { generateResponse } from "../config/aiProviders.js";
 import User from "../models/user.model.js";
 import Website from "../models/website.model.js";
 import extractJson from "../utils/extractJson.js";
@@ -154,7 +154,7 @@ ABSOLUTE RULES
 
 export const generateWebsite = async (req, res) => {
     try {
-        const { prompt } = req.body
+        const { prompt, provider = "openrouter" } = req.body
         if (!prompt) {
             return res.status(400).json({ message: "prompt is required" })
         }
@@ -171,11 +171,11 @@ export const generateWebsite = async (req, res) => {
         let raw = ""
         let parsed = null
         for (let i = 0; i < 2 && !parsed; i++) {
-            raw = await generateResponse(finalPrompt)
+            raw = await generateResponse(finalPrompt, provider)
             parsed = await extractJson(raw)
 
             if (!parsed) {
-                raw = await generateResponse(finalPrompt + "\n\nRETURN ONLY RAW JSON.")
+                raw = await generateResponse(finalPrompt + "\n\nRETURN ONLY RAW JSON.", provider)
                 parsed = await extractJson(raw)
             }
 
@@ -236,7 +236,7 @@ export const getWebsiteById = async (req, res) => {
 
 export const changes = async (req, res) => {
     try {
-        const { prompt } = req.body
+        const { prompt, provider = "openrouter" } = req.body
         if (!prompt) {
             return res.status(400).json({ message: "prompt is required" })
         }
@@ -277,11 +277,11 @@ RETURN RAW JSON ONLY:
         let raw = ""
         let parsed = null
         for (let i = 0; i < 2 && !parsed; i++) {
-            raw = await generateResponse(updatePrompt)
+            raw = await generateResponse(updatePrompt, provider)
             parsed = await extractJson(raw)
 
             if (!parsed) {
-                raw = await generateResponse(updatePrompt + "\n\nRETURN ONLY RAW JSON.")
+                raw = await generateResponse(updatePrompt + "\n\nRETURN ONLY RAW JSON.", provider)
                 parsed = await extractJson(raw)
             }
 
