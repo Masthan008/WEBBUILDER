@@ -1,17 +1,17 @@
 export const PLANS = {
   free: {
     price: 0,
-    credits: 100,
+    credits: 500,
     plan: "free",
   },
   pro: {
-    price: 499,
-    credits: 500,
+    price: 299,
+    credits: 1000,
     plan: "pro",
   },
   enterprise: {
-    price: 1499,
-    credits: 1000,
+    price: 999,
+    credits: 25000,
     plan: "enterprise",
   },
 };

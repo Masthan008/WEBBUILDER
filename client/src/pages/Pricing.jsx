@@ -11,7 +11,7 @@ const plans = [
         key: "free",
         name: "Free",
         price: "₹0",
-        credits: 100,
+        credits: 500,
         description: "Perfect to explore GenWeb.ai",
         features: [
             "AI website generation",
@@ -24,8 +24,8 @@ const plans = [
     {
         key: "pro",
         name: "Pro",
-        price: "₹499",
-        credits: 500,
+        price: "₹299",
+        credits: 1000,
         description: "For serious creators & freelancers",
         features: [
             "Everything in Free",
@@ -38,8 +38,8 @@ const plans = [
     {
         key: "enterprise",
         name: "Enterprise",
-        price: "₹1499",
-        credits: 1000,
+        price: "₹999",
+        credits: 25000,
         description: "For teams & power users",
         features: [
             "Unlimited iterations",
