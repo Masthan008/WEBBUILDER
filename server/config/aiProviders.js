@@ -14,6 +14,12 @@ const providers = {
         model: "gpt-4o-mini",
         apiKeyEnv: "OPENAI_API_KEY"
     },
+    bytez: {
+        name: "Bytez AI",
+        url: "https://api.bytez.com/v1/chat/completions",
+        model: "openai/gpt-4o",
+        apiKeyEnv: "BYTEZ_API_KEY"
+    },
     groq: {
         name: "Groq",
         url: "https://api.groq.com/openai/v1/chat/completions",
