@@ -163,7 +163,7 @@ export const generateWebsite = async (req, res) => {
         if (!user) {
             return res.status(400).json({ message: "user not found" })
         }
-        if (user.credits < 50) {
+        if (user.credits < 10) {
             return res.status(400).json({ message: "you have not enough credits to generate a webiste" })
         }
 
@@ -203,7 +203,7 @@ export const generateWebsite = async (req, res) => {
             ]
         })
 
-        user.credits = user.credits - 50
+        user.credits = user.credits - 10
         await user.save()
 
         return res.status(201).json({
@@ -255,7 +255,7 @@ export const changes = async (req, res) => {
         if (!user) {
             return res.status(400).json({ message: "user not found" })
         }
-        if (user.credits < 25) {
+        if (user.credits < 5) {
             return res.status(400).json({ message: "you have not enough credits to generate a webiste" })
         }
 
@@ -301,7 +301,7 @@ RETURN RAW JSON ONLY:
         website.latestCode = parsed.code
 
         await website.save()
-        user.credits = user.credits - 25
+        user.credits = user.credits - 5
         await user.save()
 
         return res.status(200).json({
@@ -370,5 +370,25 @@ export const getBySlug=async (req,res) => {
           return res.status(200).json(website)
     } catch (error) {
         return res.status(500).json({ message: `get by slug website error ${error}` })
+    }
+}
+
+
+export const deleteWebsite = async (req, res) => {
+    try {
+        const website = await Website.findOne({
+            _id: req.params.id,
+            user: req.user._id
+        })
+
+        if (!website) {
+            return res.status(400).json({ message: "website not found" })
+        }
+
+        await Website.deleteOne({ _id: req.params.id })
+
+        return res.status(200).json({ message: "website deleted successfully" })
+    } catch (error) {
+        return res.status(500).json({ message: `delete website error ${error}` })
     }
 }

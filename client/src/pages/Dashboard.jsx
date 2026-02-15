@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Rocket, Share2 } from 'lucide-react'
+import { ArrowLeft, Check, Rocket, Share2, Trash2 } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { motion } from "motion/react"
 import { useSelector } from 'react-redux'
@@ -12,6 +12,8 @@ function Dashboard() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
     const [copiedId, setCopiedId] = useState(null)
+    const [deletingId, setDeletingId] = useState(null)
+    
     const handleDeploy = async (id) => {
         try {
             const result = await axios.get(`${serverUrl}/api/website/deploy/${id}`, { withCredentials: true })
@@ -25,6 +27,20 @@ function Dashboard() {
       );
         } catch (error) {
             console.log(error)
+        }
+    }
+
+    const handleDelete = async (id) => {
+        if (!confirm("Are you sure you want to delete this website?")) return
+        
+        setDeletingId(id)
+        try {
+            await axios.delete(`${serverUrl}/api/website/delete/${id}`, { withCredentials: true })
+            setWebsites((prev) => prev.filter((w) => w._id !== id))
+            setDeletingId(null)
+        } catch (error) {
+            console.log(error)
+            setDeletingId(null)
         }
     }
 
@@ -112,40 +128,51 @@ function Dashboard() {
                                         {new Date(w.updatedAt).toLocaleDateString()}
                                     </p>
 
-                                    {!w.deployed ? (
-                                        <button className=" mt-auto flex items-center justify-center gap-2
+                                    <div className='mt-auto flex gap-2'>
+                                        {!w.deployed ? (
+                                            <button className="flex-1 flex items-center justify-center gap-2
                           px-4 py-2 rounded-xl text-sm font-semibold
                           bg-gradient-to-r from-indigo-500 to-purple-500
                           hover:scale-105 transition
                         "
-                                            onClick={() => handleDeploy(w._id)}
+                                                onClick={() => handleDeploy(w._id)}
 
-                                        ><Rocket size={18} /> Deploy</button>
-                                    ) : (<motion.button
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={() => handleCopy(w)}
-                                        className={`
-                          mt-auto flex items-center justify-center gap-2
+                                            ><Rocket size={18} /> Deploy</button>
+                                        ) : (<motion.button
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={() => handleCopy(w)}
+                                            className={`
+                          flex-1 flex items-center justify-center gap-2
                           px-4 py-2 rounded-xl text-sm font-medium
                           transition-all
                           ${copied
-                                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                                                : "bg-white/10 hover:bg-white/20 border border-white/10"
-                                            }
+                                                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                                    : "bg-white/10 hover:bg-white/20 border border-white/10"
+                                                }
                         `}
-                                    >
-                                        { copied?(
-                                            <>
-                                            <Check size={14}/>
-                                            Link Copied
-                                            </>
-                                        ):
-                                        <>
-                                        <Share2 size={14}/>
-                                        Share Link
-                                        </>
-                                        }
-                                    </motion.button>)}
+                                        >
+                                            {copied ? (
+                                                <>
+                                                    <Check size={14} />
+                                                    Link Copied
+                                                </>
+                                            ) :
+                                                <>
+                                                    <Share2 size={14} />
+                                                    Share Link
+                                                </>
+                                            }
+                                        </motion.button>)}
+
+                                        <button
+                                            onClick={() => handleDelete(w._id)}
+                                            disabled={deletingId === w._id}
+                                            className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 transition disabled:opacity-50"
+                                            title="Delete website"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
 
                                 </div>
 
