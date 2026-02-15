@@ -10,8 +10,8 @@ const providers = {
     },
     gemini: {
         name: "Google Gemini",
-        url: "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent",
-        model: "gemini-2.5-flash",
+        url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent",
+        model: "gemini-2.0-flash-exp",
         apiKeyEnv: "GEMINI_API_KEY"
     },
     groq: {
@@ -84,74 +84,109 @@ export const generateResponse = async (prompt, provider = "openrouter") => {
     }
 }
 
-// Gemini-specific handler
+// Gemini-specific handler - completely rewritten for reliability
 async function generateGeminiResponse(prompt, apiKey) {
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`
-    
-    // Add stricter JSON formatting instruction with escape handling
-    const enhancedPrompt = `${prompt}
-
-CRITICAL JSON FORMATTING RULES:
-1. Return ONLY valid JSON - no markdown, no explanations
-2. Use this EXACT format:
-{
-  "message": "short confirmation text",
-  "code": "complete HTML code"
-}
-3. ESCAPE all special characters in the code field:
-   - Replace " with \\"
-   - Replace newlines with \\n
-   - Replace tabs with \\t
-4. Keep the HTML code compact to avoid token limits
-5. NO trailing commas
-6. Ensure all strings are properly closed`
-    
     try {
-        const res = await fetch(url, {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`
+        
+        // Clean, simple prompt with strict JSON requirements
+        const systemInstruction = `You are a JSON generator. You MUST return ONLY a valid JSON object with exactly two fields: "message" and "code". No markdown, no explanations, no extra text.`
+        
+        const requestBody = {
+            contents: [{
+                parts: [{
+                    text: `${systemInstruction}\n\n${prompt}\n\nReturn format:\n{"message": "brief confirmation", "code": "full HTML code"}`
+                }]
+            }],
+            generationConfig: {
+                temperature: 0.1,
+                topP: 0.95,
+                topK: 40,
+                maxOutputTokens: 8192,
+                responseMimeType: "application/json"
+            },
+            safetySettings: [
+                {
+                    category: "HARM_CATEGORY_HARASSMENT",
+                    threshold: "BLOCK_NONE"
+                },
+                {
+                    category: "HARM_CATEGORY_HATE_SPEECH",
+                    threshold: "BLOCK_NONE"
+                },
+                {
+                    category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                    threshold: "BLOCK_NONE"
+                },
+                {
+                    category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                    threshold: "BLOCK_NONE"
+                }
+            ]
+        }
+
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: enhancedPrompt
-                    }]
-                }],
-                generationConfig: {
-                    temperature: 0.2,
-                    maxOutputTokens: 8192,
-                    responseMimeType: "application/json"
-                }
-            }),
+            body: JSON.stringify(requestBody)
         })
 
-        if (!res.ok) {
-            const err = await res.text()
-            throw new Error(`Gemini error: ${err}`)
+        if (!response.ok) {
+            const errorText = await response.text()
+            console.error('Gemini API error:', errorText)
+            throw new Error(`Gemini API returned ${response.status}: ${errorText}`)
         }
 
-        const data = await res.json()
-        
-        // Check for safety blocks or empty responses
+        const data = await response.json()
+
+        // Validate response structure
         if (!data.candidates || data.candidates.length === 0) {
-            throw new Error('Gemini returned no candidates. The prompt may have been blocked.')
+            console.error('Gemini response:', JSON.stringify(data))
+            throw new Error('Gemini returned no candidates. The content may have been filtered.')
         }
-        
+
         const candidate = data.candidates[0]
-        
+
+        // Check for content filtering
         if (candidate.finishReason === 'SAFETY') {
-            throw new Error('Gemini blocked the response due to safety filters.')
+            throw new Error('Gemini blocked the response due to safety filters. Try a different prompt.')
         }
-        
+
+        if (candidate.finishReason === 'RECITATION') {
+            throw new Error('Gemini blocked the response due to recitation concerns. Try rephrasing.')
+        }
+
+        // Extract content
         if (!candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
+            console.error('Gemini candidate:', JSON.stringify(candidate))
             throw new Error('Gemini returned empty content.')
         }
-        
-        return candidate.content.parts[0].text
+
+        const textContent = candidate.content.parts[0].text
+
+        if (!textContent || textContent.trim().length === 0) {
+            throw new Error('Gemini returned empty text content.')
+        }
+
+        return textContent
+
     } catch (error) {
         console.error('Gemini generation error:', error.message)
-        throw new Error(`Gemini failed: ${error.message}. Try using OpenRouter or Groq instead.`)
+        
+        // Provide user-friendly error messages
+        if (error.message.includes('API key')) {
+            throw new Error('Invalid Gemini API key. Please check your configuration.')
+        } else if (error.message.includes('quota')) {
+            throw new Error('Gemini API quota exceeded. Try OpenRouter or Groq instead.')
+        } else if (error.message.includes('safety') || error.message.includes('filtered')) {
+            throw new Error('Content was filtered by Gemini. Try using OpenRouter or Groq instead.')
+        } else if (error.message.includes('404')) {
+            throw new Error('Gemini model not found. The API may have changed.')
+        }
+        
+        throw new Error(`Gemini failed: ${error.message}. Try OpenRouter or Groq instead.`)
     }
 }
 
