@@ -14,6 +14,17 @@ const PHASES = [
     "Final quality checks…",
 ];
 
+const CODE_SNIPPETS = [
+    "<!DOCTYPE html>\n<html lang=\"en\">",
+    "<head>\n  <meta charset=\"UTF-8\">",
+    "<style>\n  body { margin: 0; }",
+    ".container {\n  max-width: 1200px;",
+    "<script>\n  document.addEventListener(",
+    "const animate = () => {",
+    "transition: all 0.3s ease;",
+    "background: linear-gradient(",
+];
+
 const AI_MODELS = [
     { id: "openrouter", name: "OpenRouter", model: "DeepSeek Chat", recommended: true },
     { id: "gemini", name: "Google Gemini", model: "Gemini 1.5 Flash" },
@@ -30,6 +41,7 @@ function Generate() {
     const [error,setError]=useState("")
     const [selectedModel, setSelectedModel] = useState("openrouter")
     const [showModelDropdown, setShowModelDropdown] = useState(false)
+    const [codeSnippet, setCodeSnippet] = useState("")
     
     const handleGenerateWebsite = async () => {
         setLoading(true)
@@ -53,11 +65,13 @@ function Generate() {
         if (!loading) {
             setPhaseIndex(0)
             setProgress(0)
+            setCodeSnippet("")
             return
         }
 
         let value = 0
         let phase = 0
+        let snippetIndex = 0
 
         const interval = setInterval(() => {
             const increment = value < 20
@@ -72,6 +86,12 @@ function Generate() {
             phase = Math.min(
                 Math.floor((value / 100) * PHASES.length), PHASES.length - 1
             )
+
+            // Update code snippet
+            snippetIndex = Math.floor((value / 100) * CODE_SNIPPETS.length)
+            if (snippetIndex < CODE_SNIPPETS.length) {
+                setCodeSnippet(CODE_SNIPPETS[snippetIndex])
+            }
 
             setProgress(Math.floor(value))
             setPhaseIndex(phase)
@@ -220,6 +240,37 @@ function Generate() {
                                 transition={{ ease: "easeOut", duration: 0.8 }}
                             />
                         </div>
+
+                        {/* Code Processing Animation */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className='mt-6 p-4 rounded-xl bg-black/60 border border-white/10'
+                        >
+                            <div className='flex items-center gap-2 mb-3'>
+                                <div className='flex gap-1.5'>
+                                    <div className='w-3 h-3 rounded-full bg-red-500'></div>
+                                    <div className='w-3 h-3 rounded-full bg-yellow-500'></div>
+                                    <div className='w-3 h-3 rounded-full bg-green-500'></div>
+                                </div>
+                                <span className='text-xs text-zinc-500'>Generating code...</span>
+                            </div>
+                            <pre className='text-xs text-green-400 font-mono overflow-hidden'>
+                                <motion.code
+                                    key={codeSnippet}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    {codeSnippet}
+                                    <motion.span
+                                        animate={{ opacity: [1, 0] }}
+                                        transition={{ duration: 0.8, repeat: Infinity }}
+                                        className='inline-block w-2 h-4 bg-green-400 ml-1'
+                                    />
+                                </motion.code>
+                            </pre>
+                        </motion.div>
 
                         <div className='text-center text-xs text-zinc-400 mt-4'>
                             Estimated time remaining:{" "}

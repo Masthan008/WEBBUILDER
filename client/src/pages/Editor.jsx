@@ -1,16 +1,19 @@
 import axios from 'axios'
 import React from 'react'
 import { useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { serverUrl } from '../App'
 import { useState } from 'react'
-import { ArrowLeft, Code, Code2, MessageCircle, MessageSquare, Monitor, Rocket, Send, X } from 'lucide-react'
+import { ArrowLeft, Code, Code2, Download, Lock, MessageCircle, MessageSquare, Monitor, Rocket, Send, X } from 'lucide-react'
 import { useRef } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
+import { useSelector } from 'react-redux'
 
 import Editor from '@monaco-editor/react';
 function WebsiteEditor() {
     const { id } = useParams()
+    const navigate = useNavigate()
+    const { userData } = useSelector(state => state.user)
     const [website, setWebsite] = useState(null)
     const [error, setError] = useState("")
     const [code, setCode] = useState("")
@@ -22,6 +25,9 @@ function WebsiteEditor() {
     const [showCode, setShowCode] = useState(false)
     const [showFullPreview, setShowFullPreview] = useState(false)
     const [showChat, setShowChat] = useState(false)
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+    
+    const isPro = userData?.plan === "pro" || userData?.plan === "enterprise"
     const thinkingSteps = [
         "Understanding your request…",
         "Planning layout changes…",
@@ -165,7 +171,32 @@ function WebsiteEditor() {
                        
                         <button className='p-2 lg:hidden' onClick={() => setShowChat(true)}><MessageSquare size={18} /></button>
 
-                        <button className='p-2' onClick={() => setShowCode(true)}><Code2 size={18} /></button>
+                        <button 
+                            className='p-2' 
+                            onClick={() => isPro ? setShowCode(true) : setShowUpgradeModal(true)}
+                            title={isPro ? "View Code" : "Pro feature"}
+                        >
+                            {isPro ? <Code2 size={18} /> : <Lock size={18} className='text-yellow-500' />}
+                        </button>
+                        <button 
+                            className='p-2'
+                            onClick={() => {
+                                if (!isPro) {
+                                    setShowUpgradeModal(true)
+                                    return
+                                }
+                                const blob = new Blob([code], { type: 'text/html' })
+                                const url = URL.createObjectURL(blob)
+                                const a = document.createElement('a')
+                                a.href = url
+                                a.download = `${website.title || 'website'}.html`
+                                a.click()
+                                URL.revokeObjectURL(url)
+                            }}
+                            title={isPro ? "Download Code" : "Pro feature"}
+                        >
+                            {isPro ? <Download size={18} /> : <Lock size={18} className='text-yellow-500' />}
+                        </button>
                         <button className='p-2' onClick={() => setShowFullPreview(true)}><Monitor size={18} /></button>
                     </div>
 
@@ -245,7 +276,11 @@ function WebsiteEditor() {
                             theme='vs-dark'
                             value={code}
                             language='html'
-                            onChange={(v) => setCode(v)}
+                            onChange={(v) => isPro ? setCode(v) : null}
+                            options={{
+                                readOnly: !isPro,
+                                minimap: { enabled: isPro }
+                            }}
                         />
 
                     </motion.div>
@@ -259,6 +294,72 @@ function WebsiteEditor() {
                     >
                         <iframe className='w-full h-full bg-white' srcDoc={code} sandbox='allow-scripts allow-same-origin allow-forms'/>
                         <button onClick={() => setShowFullPreview(false)} className='absolute top-4 right-4 p-2 bg-black/70 rounded-lg'><X /></button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Upgrade Modal */}
+            <AnimatePresence>
+                {showUpgradeModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4"
+                        onClick={() => setShowUpgradeModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="relative max-w-md w-full p-8 rounded-3xl bg-gradient-to-br from-zinc-900 to-black border border-white/10"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <button
+                                onClick={() => setShowUpgradeModal(false)}
+                                className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-lg transition"
+                            >
+                                <X size={18} />
+                            </button>
+
+                            <div className="text-center mb-6">
+                                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center">
+                                    <Lock size={28} />
+                                </div>
+                                <h2 className="text-2xl font-bold mb-2">Upgrade to Pro</h2>
+                                <p className="text-zinc-400 text-sm">
+                                    Code editing and downloading are available in Pro and Enterprise plans
+                                </p>
+                            </div>
+
+                            <div className="space-y-3 mb-6">
+                                <div className="flex items-center gap-3 text-sm">
+                                    <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
+                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                    </div>
+                                    <span>View and edit source code</span>
+                                </div>
+                                <div className="flex items-center gap-3 text-sm">
+                                    <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
+                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                    </div>
+                                    <span>Download HTML files</span>
+                                </div>
+                                <div className="flex items-center gap-3 text-sm">
+                                    <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
+                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                    </div>
+                                    <span>More credits for generation</span>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => navigate('/pricing')}
+                                className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 font-semibold hover:scale-105 transition"
+                            >
+                                View Plans
+                            </button>
+                        </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
