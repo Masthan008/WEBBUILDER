@@ -19,6 +19,7 @@ app.use(cookieParser())
 const allowedOrigins = [
     "http://localhost:5173",
     "https://webbuilder-git-main-khalliaprjc-1623s-projects.vercel.app",
+    "https://webbuilder-gold.vercel.app",
     process.env.FRONTEND_URL
 ].filter(Boolean)
 
