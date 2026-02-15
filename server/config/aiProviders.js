@@ -44,7 +44,12 @@ export const generateResponse = async (prompt, provider = "openrouter") => {
         return await generateGeminiResponse(prompt, apiKey)
     }
 
-    // OpenAI-compatible format (OpenRouter, Groq, NVIDIA)
+    // NVIDIA needs special handling (non-streaming)
+    if (provider === "nvidia") {
+        return await generateNvidiaResponse(prompt, apiKey, config)
+    }
+
+    // OpenAI-compatible format (OpenRouter, Groq)
     try {
         const res = await fetch(config.url, {
             method: 'POST',
@@ -59,7 +64,8 @@ export const generateResponse = async (prompt, provider = "openrouter") => {
                     { role: 'user', content: prompt }
                 ],
                 temperature: 0.2,
-                max_tokens: 16384
+                max_tokens: 4096,
+                stream: false
             }),
         })
 
@@ -105,6 +111,41 @@ async function generateGeminiResponse(prompt, apiKey) {
 
     const data = await res.json()
     return data.candidates[0].content.parts[0].text
+}
+
+// NVIDIA-specific handler (non-streaming for stability)
+async function generateNvidiaResponse(prompt, apiKey, config) {
+    try {
+        const res = await fetch(config.url, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: config.model,
+                messages: [
+                    { role: "system", content: "You must return ONLY valid raw JSON." },
+                    { role: 'user', content: prompt }
+                ],
+                temperature: 0.2,
+                max_tokens: 4096,
+                stream: false,
+                top_p: 1
+            }),
+        })
+
+        if (!res.ok) {
+            const err = await res.text()
+            throw new Error(`NVIDIA error: ${err}`)
+        }
+
+        const data = await res.json()
+        return data.choices[0].message.content
+    } catch (error) {
+        console.error('NVIDIA fetch error:', error.message)
+        throw new Error('NVIDIA connection failed. The model may be unavailable. Please try OpenRouter or Groq instead.')
+    }
 }
 
 export const getAvailableProviders = () => {
