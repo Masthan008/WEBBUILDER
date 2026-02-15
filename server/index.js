@@ -41,6 +41,20 @@ app.get("/", (req, res) => {
     res.json({ status: "Server is running", message: "API endpoints available at /api/*" })
 })
 
+// API health check
+app.get("/api/health", (req, res) => {
+    res.json({ 
+        status: "OK", 
+        timestamp: new Date().toISOString(),
+        endpoints: {
+            auth: "/api/auth/*",
+            user: "/api/user/*",
+            website: "/api/website/*",
+            billing: "/api/billing/*"
+        }
+    })
+})
+
 app.use("/api/auth",authRouter)
 app.use("/api/user",userRouter)
 app.use("/api/website",websiteRouter)

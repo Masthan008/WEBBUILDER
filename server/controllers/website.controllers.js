@@ -154,6 +154,12 @@ ABSOLUTE RULES
 
 export const generateWebsite = async (req, res) => {
     try {
+        console.log('Generate website request received:', {
+            provider: req.body.provider,
+            promptLength: req.body.prompt?.length,
+            userId: req.user?._id
+        })
+        
         const { prompt, provider = "openrouter" } = req.body
         if (!prompt) {
             return res.status(400).json({ message: "prompt is required" })
@@ -167,14 +173,18 @@ export const generateWebsite = async (req, res) => {
             return res.status(400).json({ message: "you have not enough credits to generate a webiste" })
         }
 
+        console.log(`Starting generation with ${provider} for user ${user._id}`)
+
         const finalPrompt = masterPrompt.replace("USER_PROMPT", prompt)
         let raw = ""
         let parsed = null
         for (let i = 0; i < 2 && !parsed; i++) {
+            console.log(`Generation attempt ${i + 1} with ${provider}`)
             raw = await generateResponse(finalPrompt, provider)
             parsed = await extractJson(raw)
 
             if (!parsed) {
+                console.log(`Attempt ${i + 1} failed, retrying with stricter prompt`)
                 raw = await generateResponse(finalPrompt + "\n\nRETURN ONLY RAW JSON.", provider)
                 parsed = await extractJson(raw)
             }
@@ -185,6 +195,8 @@ export const generateWebsite = async (req, res) => {
             console.log("ai returned invalid response", raw)
             return res.status(400).json({ message: "ai returned invalid response" })
         }
+
+        console.log('Website generated successfully, saving to database')
 
         const website = await Website.create({
             user: user._id,
@@ -206,12 +218,16 @@ export const generateWebsite = async (req, res) => {
         user.credits = user.credits - 10
         await user.save()
 
+        console.log('Website saved, returning response')
+
         return res.status(201).json({
             websiteId: website._id,
             remainingCredits: user.credits
         })
 
     } catch (error) {
+        console.error('Generate website error:', error.message)
+        console.error('Error stack:', error.stack)
         return res.status(500).json({ message: `generate website error ${error}` })
     }
 }

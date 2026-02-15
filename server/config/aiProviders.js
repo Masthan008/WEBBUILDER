@@ -10,8 +10,8 @@ const providers = {
     },
     gemini: {
         name: "Google Gemini",
-        url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent",
-        model: "gemini-2.0-flash-exp",
+        url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        model: "gemini-2.5-flash",
         apiKeyEnv: "GEMINI_API_KEY"
     },
     groq: {
@@ -87,7 +87,7 @@ export const generateResponse = async (prompt, provider = "openrouter") => {
 // Gemini-specific handler - completely rewritten for reliability
 async function generateGeminiResponse(prompt, apiKey) {
     try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`
         
         // Clean, simple prompt with strict JSON requirements
         const systemInstruction = `You are a JSON generator. You MUST return ONLY a valid JSON object with exactly two fields: "message" and "code". No markdown, no explanations, no extra text.`

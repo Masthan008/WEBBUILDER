@@ -27,7 +27,7 @@ const CODE_SNIPPETS = [
 
 const AI_MODELS = [
     { id: "openrouter", name: "OpenRouter", model: "DeepSeek Chat", recommended: true },
-    { id: "gemini", name: "Google Gemini", model: "Gemini 2.0 Flash" },
+    { id: "gemini", name: "Google Gemini", model: "Gemini 2.5 Flash" },
     { id: "groq", name: "Groq", model: "Llama 3.3 70B" },
     { id: "nvidia", name: "NVIDIA DeepSeek", model: "DeepSeek v3.1 Terminus" }
 ]
@@ -45,19 +45,48 @@ function Generate() {
     
     const handleGenerateWebsite = async () => {
         setLoading(true)
+        setError("")
+        
         try {
             const result = await axios.post(`${serverUrl}/api/website/generate`, { 
                 prompt, 
                 provider: selectedModel 
             }, { withCredentials: true })
-            console.log(result)
+            
+            console.log('Generation successful:', result.data)
             setProgress(100)
             setLoading(false)
             navigate(`/editor/${result.data.websiteId}`)
         } catch (error) {
             setLoading(false)
-            setError(error.response.data.message || "something went wrong")
-            console.log(error)
+            setProgress(0)
+            
+            console.error('Generation error:', error)
+            
+            // Handle different error types
+            if (error.response) {
+                // Server responded with error status
+                const status = error.response.status
+                const message = error.response.data?.message || error.response.data
+                
+                if (status === 404) {
+                    setError("API endpoint not found. Please check if the backend server is running correctly.")
+                } else if (status === 401) {
+                    setError("Authentication failed. Please log in again.")
+                } else if (status === 400) {
+                    setError(message || "Invalid request. Please check your input.")
+                } else if (status === 500) {
+                    setError(message || "Server error. Please try again or use a different AI model.")
+                } else {
+                    setError(message || `Error ${status}: Something went wrong`)
+                }
+            } else if (error.request) {
+                // Request made but no response received
+                setError("Cannot reach the server. Please check your internet connection and ensure the backend is running.")
+            } else {
+                // Something else happened
+                setError(error.message || "An unexpected error occurred")
+            }
         }
     }
 
