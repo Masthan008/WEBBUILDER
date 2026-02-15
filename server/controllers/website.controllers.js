@@ -191,9 +191,21 @@ export const generateWebsite = async (req, res) => {
 
         }
 
+        // Check if parsing failed completely
+        if (!parsed) {
+            console.error("Failed to parse JSON after all attempts")
+            console.error("Raw response:", raw?.substring(0, 500))
+            return res.status(400).json({ 
+                message: `${provider} returned invalid JSON format. Try using OpenRouter or Groq instead.` 
+            })
+        }
+
+        // Check if code field exists
         if (!parsed.code) {
-            console.log("ai returned invalid response", raw)
-            return res.status(400).json({ message: "ai returned invalid response" })
+            console.error("Parsed JSON missing 'code' field:", parsed)
+            return res.status(400).json({ 
+                message: `${provider} returned incomplete response. Try using OpenRouter or Groq instead.` 
+            })
         }
 
         console.log('Website generated successfully, saving to database')

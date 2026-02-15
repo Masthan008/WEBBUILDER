@@ -89,21 +89,33 @@ async function generateGeminiResponse(prompt, apiKey) {
     try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`
         
-        // Clean, simple prompt with strict JSON requirements
-        const systemInstruction = `You are a JSON generator. You MUST return ONLY a valid JSON object with exactly two fields: "message" and "code". No markdown, no explanations, no extra text.`
+        // Simplified prompt focusing on JSON output
+        const enhancedPrompt = `${prompt}
+
+CRITICAL: You MUST respond with ONLY a valid JSON object in this EXACT format:
+{
+  "message": "Brief confirmation message here",
+  "code": "Complete HTML code here"
+}
+
+Rules:
+- NO markdown code blocks (no \`\`\`json or \`\`\`)
+- NO explanations before or after the JSON
+- NO extra text
+- Just the raw JSON object
+- Ensure all quotes are properly escaped in the HTML code`
         
         const requestBody = {
             contents: [{
                 parts: [{
-                    text: `${systemInstruction}\n\n${prompt}\n\nReturn format:\n{"message": "brief confirmation", "code": "full HTML code"}`
+                    text: enhancedPrompt
                 }]
             }],
             generationConfig: {
                 temperature: 0.1,
                 topP: 0.95,
                 topK: 40,
-                maxOutputTokens: 8192,
-                responseMimeType: "application/json"
+                maxOutputTokens: 8192
             },
             safetySettings: [
                 {
@@ -158,6 +170,10 @@ async function generateGeminiResponse(prompt, apiKey) {
             throw new Error('Gemini blocked the response due to recitation concerns. Try rephrasing.')
         }
 
+        if (candidate.finishReason === 'MAX_TOKENS') {
+            throw new Error('Gemini response was too long. Try a simpler prompt or use OpenRouter.')
+        }
+
         // Extract content
         if (!candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
             console.error('Gemini candidate:', JSON.stringify(candidate))
@@ -169,6 +185,9 @@ async function generateGeminiResponse(prompt, apiKey) {
         if (!textContent || textContent.trim().length === 0) {
             throw new Error('Gemini returned empty text content.')
         }
+
+        console.log('Gemini response length:', textContent.length)
+        console.log('Gemini response preview:', textContent.substring(0, 200))
 
         return textContent
 
@@ -184,6 +203,8 @@ async function generateGeminiResponse(prompt, apiKey) {
             throw new Error('Content was filtered by Gemini. Try using OpenRouter or Groq instead.')
         } else if (error.message.includes('404')) {
             throw new Error('Gemini model not found. The API may have changed.')
+        } else if (error.message.includes('MAX_TOKENS')) {
+            throw new Error('Response too long. Try a simpler prompt or use OpenRouter.')
         }
         
         throw new Error(`Gemini failed: ${error.message}. Try OpenRouter or Groq instead.`)
