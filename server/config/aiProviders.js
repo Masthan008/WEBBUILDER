@@ -8,8 +8,8 @@ const providers = {
     },
     gemini: {
         name: "Google Gemini",
-        url: "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-exp:generateContent",
-        model: "gemini-2.0-flash-exp",
+        url: "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent",
+        model: "gemini-2.5-flash",
         apiKeyEnv: "GEMINI_API_KEY"
     },
     groq: {
@@ -78,7 +78,7 @@ export const generateResponse = async (prompt, provider = "openrouter") => {
 
 // Gemini-specific handler
 async function generateGeminiResponse(prompt, apiKey) {
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`
     
     const res = await fetch(url, {
         method: 'POST',
