@@ -8,8 +8,8 @@ const providers = {
     },
     gemini: {
         name: "Google Gemini",
-        url: "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent",
-        model: "gemini-1.5-flash",
+        url: "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-exp:generateContent",
+        model: "gemini-2.0-flash-exp",
         apiKeyEnv: "GEMINI_API_KEY"
     },
     groq: {
@@ -45,35 +45,40 @@ export const generateResponse = async (prompt, provider = "openrouter") => {
     }
 
     // OpenAI-compatible format (OpenRouter, Groq, NVIDIA)
-    const res = await fetch(config.url, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            model: config.model,
-            messages: [
-                { role: "system", content: "You must return ONLY valid raw JSON." },
-                { role: 'user', content: prompt }
-            ],
-            temperature: 0.2,
-            max_tokens: 16384
-        }),
-    })
+    try {
+        const res = await fetch(config.url, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: config.model,
+                messages: [
+                    { role: "system", content: "You must return ONLY valid raw JSON." },
+                    { role: 'user', content: prompt }
+                ],
+                temperature: 0.2,
+                max_tokens: 16384
+            }),
+        })
 
-    if (!res.ok) {
-        const err = await res.text()
-        throw new Error(`${config.name} error: ${err}`)
+        if (!res.ok) {
+            const err = await res.text()
+            throw new Error(`${config.name} error: ${err}`)
+        }
+
+        const data = await res.json()
+        return data.choices[0].message.content
+    } catch (error) {
+        console.error(`${config.name} fetch error:`, error.message)
+        throw new Error(`${config.name} connection failed. Please try another model or check your internet connection.`)
     }
-
-    const data = await res.json()
-    return data.choices[0].message.content
 }
 
 // Gemini-specific handler
 async function generateGeminiResponse(prompt, apiKey) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`
     
     const res = await fetch(url, {
         method: 'POST',

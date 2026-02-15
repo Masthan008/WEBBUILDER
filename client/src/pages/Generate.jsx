@@ -27,7 +27,7 @@ const CODE_SNIPPETS = [
 
 const AI_MODELS = [
     { id: "openrouter", name: "OpenRouter", model: "DeepSeek Chat", recommended: true },
-    { id: "gemini", name: "Google Gemini", model: "Gemini 1.5 Flash" },
+    { id: "gemini", name: "Google Gemini", model: "Gemini 2.0 Flash" },
     { id: "groq", name: "Groq", model: "Llama 3.3 70B" },
     { id: "nvidia", name: "NVIDIA Kimi", model: "Kimi K2.5" }
 ]
