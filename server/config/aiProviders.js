@@ -86,6 +86,17 @@ export const generateResponse = async (prompt, provider = "openrouter") => {
 async function generateGeminiResponse(prompt, apiKey) {
     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`
     
+    // Add stricter JSON formatting instruction
+    const enhancedPrompt = `${prompt}
+
+CRITICAL: Your response MUST be ONLY valid JSON with this EXACT format:
+{
+  "message": "short confirmation text here",
+  "code": "complete HTML code here"
+}
+
+NO markdown, NO explanations, NO extra text. ONLY the JSON object.`
+    
     const res = await fetch(url, {
         method: 'POST',
         headers: {
@@ -94,12 +105,13 @@ async function generateGeminiResponse(prompt, apiKey) {
         body: JSON.stringify({
             contents: [{
                 parts: [{
-                    text: "You must return ONLY valid raw JSON.\n\n" + prompt
+                    text: enhancedPrompt
                 }]
             }],
             generationConfig: {
                 temperature: 0.2,
-                maxOutputTokens: 8192
+                maxOutputTokens: 8192,
+                responseMimeType: "application/json"
             }
         }),
     })
