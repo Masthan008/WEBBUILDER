@@ -29,7 +29,7 @@ const AI_MODELS = [
     { id: "openrouter", name: "OpenRouter", model: "DeepSeek Chat", recommended: true },
     { id: "gemini", name: "Google Gemini", model: "Gemini 2.5 Flash" },
     { id: "groq", name: "Groq", model: "Llama 3.3 70B" },
-    { id: "nvidia", name: "NVIDIA Kimi", model: "Kimi K2.5" }
+    { id: "nvidia", name: "NVIDIA DeepSeek", model: "DeepSeek v3.1 Terminus" }
 ]
 
 function Generate() {

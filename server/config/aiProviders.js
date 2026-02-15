@@ -1,3 +1,5 @@
+import OpenAI from 'openai'
+
 // AI Provider configurations
 const providers = {
     openrouter: {
@@ -19,9 +21,9 @@ const providers = {
         apiKeyEnv: "GROQ_API_KEY"
     },
     nvidia: {
-        name: "NVIDIA Kimi",
-        url: "https://integrate.api.nvidia.com/v1/chat/completions",
-        model: "moonshotai/kimi-k2.5",
+        name: "NVIDIA DeepSeek",
+        url: "https://integrate.api.nvidia.com/v1",
+        model: "deepseek-ai/deepseek-v3.1-terminus",
         apiKeyEnv: "NVIDIA_API_KEY"
     }
 }
@@ -86,77 +88,121 @@ export const generateResponse = async (prompt, provider = "openrouter") => {
 async function generateGeminiResponse(prompt, apiKey) {
     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`
     
-    // Add stricter JSON formatting instruction
+    // Add stricter JSON formatting instruction with escape handling
     const enhancedPrompt = `${prompt}
 
-CRITICAL: Your response MUST be ONLY valid JSON with this EXACT format:
+CRITICAL JSON FORMATTING RULES:
+1. Return ONLY valid JSON - no markdown, no explanations
+2. Use this EXACT format:
 {
-  "message": "short confirmation text here",
-  "code": "complete HTML code here"
+  "message": "short confirmation text",
+  "code": "complete HTML code"
 }
-
-NO markdown, NO explanations, NO extra text. ONLY the JSON object.`
+3. ESCAPE all special characters in the code field:
+   - Replace " with \\"
+   - Replace newlines with \\n
+   - Replace tabs with \\t
+4. Keep the HTML code compact to avoid token limits
+5. NO trailing commas
+6. Ensure all strings are properly closed`
     
-    const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            contents: [{
-                parts: [{
-                    text: enhancedPrompt
-                }]
-            }],
-            generationConfig: {
-                temperature: 0.2,
-                maxOutputTokens: 8192,
-                responseMimeType: "application/json"
-            }
-        }),
-    })
-
-    if (!res.ok) {
-        const err = await res.text()
-        throw new Error(`Gemini error: ${err}`)
-    }
-
-    const data = await res.json()
-    return data.candidates[0].content.parts[0].text
-}
-
-// NVIDIA-specific handler (non-streaming for stability)
-async function generateNvidiaResponse(prompt, apiKey, config) {
     try {
-        const res = await fetch(config.url, {
+        const res = await fetch(url, {
             method: 'POST',
             headers: {
-                Authorization: `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                model: config.model,
-                messages: [
-                    { role: "system", content: "You must return ONLY valid raw JSON." },
-                    { role: 'user', content: prompt }
-                ],
-                temperature: 0.2,
-                max_tokens: 4096,
-                stream: false,
-                top_p: 1
+                contents: [{
+                    parts: [{
+                        text: enhancedPrompt
+                    }]
+                }],
+                generationConfig: {
+                    temperature: 0.2,
+                    maxOutputTokens: 8192,
+                    responseMimeType: "application/json"
+                }
             }),
         })
 
         if (!res.ok) {
             const err = await res.text()
-            throw new Error(`NVIDIA error: ${err}`)
+            throw new Error(`Gemini error: ${err}`)
         }
 
         const data = await res.json()
-        return data.choices[0].message.content
+        
+        // Check for safety blocks or empty responses
+        if (!data.candidates || data.candidates.length === 0) {
+            throw new Error('Gemini returned no candidates. The prompt may have been blocked.')
+        }
+        
+        const candidate = data.candidates[0]
+        
+        if (candidate.finishReason === 'SAFETY') {
+            throw new Error('Gemini blocked the response due to safety filters.')
+        }
+        
+        if (!candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
+            throw new Error('Gemini returned empty content.')
+        }
+        
+        return candidate.content.parts[0].text
     } catch (error) {
-        console.error('NVIDIA fetch error:', error.message)
-        throw new Error('NVIDIA connection failed. The model may be unavailable. Please try OpenRouter or Groq instead.')
+        console.error('Gemini generation error:', error.message)
+        throw new Error(`Gemini failed: ${error.message}. Try using OpenRouter or Groq instead.`)
+    }
+}
+
+// NVIDIA-specific handler using OpenAI SDK (non-streaming for stability)
+async function generateNvidiaResponse(prompt, apiKey, config) {
+    try {
+        const openai = new OpenAI({
+            apiKey: apiKey,
+            baseURL: config.url
+        })
+
+        // Add JSON formatting instruction
+        const enhancedPrompt = `${prompt}
+
+CRITICAL: Return ONLY valid JSON in this exact format:
+{
+  "message": "short confirmation",
+  "code": "complete HTML code"
+}
+NO markdown, NO explanations.`
+
+        const completion = await openai.chat.completions.create({
+            model: config.model,
+            messages: [
+                { role: "system", content: "You are a code generator that returns ONLY valid JSON." },
+                { role: "user", content: enhancedPrompt }
+            ],
+            temperature: 0.2,
+            top_p: 0.7,
+            max_tokens: 8192,
+            stream: false
+        })
+
+        if (!completion.choices || completion.choices.length === 0) {
+            throw new Error('NVIDIA returned no response')
+        }
+
+        return completion.choices[0].message.content
+    } catch (error) {
+        console.error('NVIDIA generation error:', error.message)
+        
+        // Provide more specific error messages
+        if (error.message.includes('timeout')) {
+            throw new Error('NVIDIA request timed out. Try using OpenRouter or Groq instead.')
+        } else if (error.message.includes('rate limit')) {
+            throw new Error('NVIDIA rate limit reached. Please use OpenRouter or Groq.')
+        } else if (error.message.includes('404')) {
+            throw new Error('NVIDIA model not available. Try OpenRouter or Groq instead.')
+        }
+        
+        throw new Error(`NVIDIA failed: ${error.message}. Try OpenRouter or Groq instead.`)
     }
 }
 
