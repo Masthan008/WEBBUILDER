@@ -1,4 +1,5 @@
 import { generateResponse } from "../config/aiProviders.js";
+import { extractImageRequirements, generateMultipleImages } from "../config/imageProviders.js";
 import User from "../models/user.model.js";
 import Website from "../models/website.model.js";
 import extractJson from "../utils/extractJson.js";
@@ -259,10 +260,40 @@ export const generateWebsite = async (req, res) => {
 
         console.log(`Starting generation with ${provider} for user ${user._id}, codeType: ${codeType}`)
 
+        // Check if user wants AI-generated images
+        const imagePrompts = extractImageRequirements(prompt)
+        let generatedImages = []
+        
+        if (imagePrompts.length > 0 && process.env.BYTEZ_API_KEY) {
+            console.log(`User requested images. Generating ${imagePrompts.length} images...`)
+            try {
+                generatedImages = await generateMultipleImages(imagePrompts)
+                console.log(`Successfully generated ${generatedImages.length} images`)
+            } catch (error) {
+                console.error('Image generation failed, continuing without custom images:', error.message)
+            }
+        }
+
         // Choose the appropriate prompt based on code type
-        const finalPrompt = codeType === "fullstack" 
+        let finalPrompt = codeType === "fullstack" 
             ? fullStackPrompt.replace("{USER_PROMPT}", prompt)
             : masterPrompt.replace("USER_PROMPT", prompt)
+        
+        // If images were generated, add them to the prompt
+        if (generatedImages.length > 0) {
+            finalPrompt += `\n\n--------------------------------------------------
+AI-GENERATED IMAGES AVAILABLE
+--------------------------------------------------
+Use these AI-generated image URLs in your website:
+${generatedImages.map((url, i) => `Image ${i + 1}: ${url}`).join('\n')}
+
+IMPORTANT:
+- Use these URLs directly in <img> tags
+- These are real AI-generated images matching the website theme
+- Do NOT use placeholder images from Unsplash
+- Add proper alt text describing each image
+`
+        }
         
         let raw = ""
         let parsed = null

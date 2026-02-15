@@ -10,6 +10,7 @@ Bytez is an AI platform that provides access to various AI models including GPT-
 - OpenAI-compatible API format
 - Potentially better pricing than direct OpenAI
 - Unified access to multiple models
+- **Image Generation**: Access to multiple image generation models including DALL-E, Stable Diffusion, and Imagen
 
 ## Setup Instructions
 
@@ -137,3 +138,36 @@ If you need help with Bytez:
 - Check Bytez documentation
 - Contact Bytez support
 - Review API response errors for specific issues
+
+## Image Generation Models
+
+StackStudio now supports AI image generation using Bytez! Available models:
+
+1. **stabilityai/stable-diffusion-xl-base-1.0** (Default)
+2. **openai/dall-e-2**
+3. **openai/dall-e-3**
+4. **stable-diffusion-v1-5/stable-diffusion-v1-5**
+5. **google/imagen-4.0-ultra-generate-001**
+6. **google/imagen-4.0-generate-001**
+
+### How It Works
+
+1. Enable "AI Image Generation" toggle in the Generate page
+2. Describe your website (e.g., "restaurant website", "portfolio")
+3. The system automatically:
+   - Detects image requirements from your description
+   - Generates relevant images using AI
+   - Includes them in your website code
+
+### Example Prompts
+
+- "Create a restaurant website" → Generates food and restaurant interior images
+- "Build a portfolio website" → Generates professional workspace images
+- "Make an ecommerce store" → Generates product photography images
+
+### Cost Considerations
+
+- Image generation uses your Bytez API credits
+- Each image generation counts toward your Bytez quota
+- Monitor usage in your Bytez dashboard
+- Images are generated only when the toggle is enabled

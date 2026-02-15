@@ -44,14 +44,21 @@ function Generate() {
     const [showModelDropdown, setShowModelDropdown] = useState(false)
     const [codeSnippet, setCodeSnippet] = useState("")
     const [codeType, setCodeType] = useState("html") // "html" or "fullstack"
+    const [generateImages, setGenerateImages] = useState(false) // Toggle for AI image generation
     
     const handleGenerateWebsite = async () => {
         setLoading(true)
         setError("")
         
+        // Add image generation instruction to prompt if enabled
+        let finalPrompt = prompt
+        if (generateImages) {
+            finalPrompt += "\n\nIMPORTANT: Generate images for this website using AI. Include relevant, high-quality images that match the website theme."
+        }
+        
         try {
             const result = await axios.post(`${serverUrl}/api/website/generate`, { 
-                prompt, 
+                prompt: finalPrompt, 
                 provider: selectedModel,
                 codeType: codeType
             }, { withCredentials: true })
@@ -193,6 +200,26 @@ function Generate() {
                                 <div className='text-sm font-medium mb-1'>Full Stack</div>
                                 <div className='text-xs text-zinc-500'>Frontend + Backend code</div>
                             </div>
+                        </button>
+                    </div>
+                </div>
+                
+                {/* AI Image Generation Toggle */}
+                <div className='mb-6'>
+                    <div className='flex items-center justify-between p-4 rounded-xl bg-black/60 border border-white/10'>
+                        <div>
+                            <label className='text-sm font-medium text-white mb-1 block'>AI Image Generation</label>
+                            <p className='text-xs text-zinc-500'>Generate custom images using AI (requires Bytez API)</p>
+                        </div>
+                        <button
+                            onClick={() => setGenerateImages(!generateImages)}
+                            className={`relative w-14 h-7 rounded-full transition ${
+                                generateImages ? 'bg-blue-500' : 'bg-zinc-700'
+                            }`}
+                        >
+                            <div className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white transition-transform ${
+                                generateImages ? 'translate-x-7' : 'translate-x-0'
+                            }`}></div>
                         </button>
                     </div>
                 </div>
