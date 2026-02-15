@@ -8,7 +8,7 @@ const providers = {
     },
     gemini: {
         name: "Google Gemini",
-        url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+        url: "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent",
         model: "gemini-1.5-flash",
         apiKeyEnv: "GEMINI_API_KEY"
     },
@@ -57,7 +57,8 @@ export const generateResponse = async (prompt, provider = "openrouter") => {
                 { role: "system", content: "You must return ONLY valid raw JSON." },
                 { role: 'user', content: prompt }
             ],
-            temperature: 0.2
+            temperature: 0.2,
+            max_tokens: 16384
         }),
     })
 
@@ -72,7 +73,7 @@ export const generateResponse = async (prompt, provider = "openrouter") => {
 
 // Gemini-specific handler
 async function generateGeminiResponse(prompt, apiKey) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`
     
     const res = await fetch(url, {
         method: 'POST',
