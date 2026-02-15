@@ -12,7 +12,7 @@ const plans = [
         name: "Free",
         price: "₹0",
         credits: 500,
-        description: "Perfect to explore GenWeb.ai",
+        description: "Perfect to explore StackStudio",
         features: [
             "AI website generation",
             "Responsive HTML output",
