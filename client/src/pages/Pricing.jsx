@@ -1,11 +1,11 @@
 import { ArrowLeft, Check, Coins } from 'lucide-react';
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
-
 import { motion } from "motion/react"
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { serverUrl } from '../App';
+import NumberFlow from '@number-flow/react';
 const plans = [
     {
         key: "free",
@@ -110,7 +110,24 @@ try {
                             }`}
                     >
                         {p.popular && (
-                            <span className='absolute top-5 right-5 px-3 py-1 text-xs rounded-full bg-indigo-500'>Most Popular</span>
+                            <>
+                                <motion.div
+                                    className="absolute inset-0 rounded-3xl"
+                                    animate={{
+                                        boxShadow: [
+                                            "0 0 20px rgba(99, 102, 241, 0.3)",
+                                            "0 0 60px rgba(99, 102, 241, 0.5)",
+                                            "0 0 20px rgba(99, 102, 241, 0.3)",
+                                        ],
+                                    }}
+                                    transition={{
+                                        duration: 2,
+                                        repeat: Infinity,
+                                        ease: "easeInOut",
+                                    }}
+                                />
+                                <span className='absolute top-5 right-5 px-3 py-1 text-xs rounded-full bg-indigo-500'>Most Popular</span>
+                            </>
                         )}
 
                         <h1 className='text-xl font-semibold mb-2'>{p.name}</h1>
@@ -122,18 +139,27 @@ try {
 
                         <div className='flex items-center gap-2 mb-8'>
                             <Coins size={18} className='text-yellow-400' />
-                            <span className='font-semibold'>{p.credits} Credits</span>
+                            <span className='font-semibold'>
+                                <NumberFlow 
+                                    value={p.credits} 
+                                    format={{ notation: 'compact' }}
+                                    className='inline'
+                                /> Credits
+                            </span>
                         </div>
 
                         <ul className='space-y-3 mb-10'>
-                            {p.features.map((f) => (
-                                <li
+                            {p.features.map((f, idx) => (
+                                <motion.li
                                     key={f}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: i * 0.1 + idx * 0.05 }}
                                     className='flex items-center gap-2 text-sm text-zinc-300'
                                 >
                                     <Check size={16} className='text-green-400' />
                                     {f}
-                                </li>
+                                </motion.li>
                             ))}
                         </ul>
 
