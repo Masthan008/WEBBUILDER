@@ -1,38 +1,74 @@
-// Image Generation Provider Configuration using Bytez AI
+// Image Generation - DUAL PROVIDER SYSTEM (Bytez + Pollinations)
 
-const imageModels = [
-    "stabilityai/stable-diffusion-xl-base-1.0",
-    "openai/dall-e-2",
-    "openai/dall-e-3",
-    "stable-diffusion-v1-5/stable-diffusion-v1-5",
-    "google/imagen-4.0-ultra-generate-001",
-    "google/imagen-4.0-generate-001"
-]
+const imageModels = {
+    // Bytez AI Models (requires API key, paid)
+    bytez: [
+        "stabilityai/stable-diffusion-xl-base-1.0",
+        "openai/dall-e-2",
+        "openai/dall-e-3",
+        "stable-diffusion-v1-5/stable-diffusion-v1-5",
+        "google/imagen-4.0-ultra-generate-001",
+        "google/imagen-4.0-generate-001"
+    ],
+    // Pollinations AI Models (FREE, no API key needed!)
+    pollinations: [
+        "flux",
+        "flux-realism",
+        "flux-anime",
+        "flux-3d",
+        "turbo"
+    ]
+}
 
-// Default model for image generation
-const defaultImageModel = "stabilityai/stable-diffusion-xl-base-1.0"
+const defaultBytezModel = "stable-diffusion-v1-5/stable-diffusion-v1-5"
+const defaultPollinationsModel = "flux"
 
 /**
- * Generate an image using Bytez AI
- * @param {string} prompt - Description of the image to generate
- * @param {string} model - Model to use (optional, defaults to Stable Diffusion XL)
- * @returns {Promise<string>} - Base64 encoded image or URL
+ * Generate image using Pollinations AI - FREE & INSTANT
+ * No API key needed, instant URL generation
+ * @param {string} prompt - Description of the image
+ * @param {string} model - Model to use (default: flux)
+ * @returns {string} - Image URL (instant)
  */
-export const generateImage = async (prompt, model = defaultImageModel) => {
+export const generatePollinationsImage = (prompt, model = defaultPollinationsModel) => {
+    console.log(`[Pollinations] Generating with ${model}`)
+    
+    const cleanPrompt = prompt.trim().substring(0, 500)
+    const encodedPrompt = encodeURIComponent(cleanPrompt)
+    
+    // Pollinations URL with parameters
+    const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1200&height=800&model=${model}&nologo=true&enhance=true`
+    
+    console.log(`[Pollinations] Generated URL instantly`)
+    return url
+}
+
+/**
+ * Generate image using Bytez AI - PAID
+ * Requires BYTEZ_API_KEY
+ * @param {string} prompt - Description of the image
+ * @param {string} model - Model to use
+ * @returns {Promise<string>} - Image URL
+ */
+export const generateBytezImage = async (prompt, model = defaultBytezModel) => {
     const apiKey = process.env.BYTEZ_API_KEY
     
     if (!apiKey) {
-        throw new Error('Bytez API key not found. Image generation requires BYTEZ_API_KEY.')
+        throw new Error('Bytez API key not found')
     }
 
     try {
-        console.log(`Generating image with ${model}:`, prompt)
+        console.log(`[Bytez] Generating with ${model}`)
+
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 60000)
 
         const response = await fetch('https://api.bytez.com/v1/images/generations', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify({
                 model: model,
@@ -40,13 +76,16 @@ export const generateImage = async (prompt, model = defaultImageModel) => {
                 n: 1,
                 size: "1024x1024",
                 response_format: "url"
-            })
+            }),
+            signal: controller.signal
         })
+
+        clearTimeout(timeoutId)
 
         if (!response.ok) {
             const error = await response.text()
-            console.error('Bytez image generation error:', error)
-            throw new Error(`Image generation failed: ${response.status}`)
+            console.error('[Bytez] API error:', response.status)
+            throw new Error(`Bytez error: ${response.status}`)
         }
 
         const data = await response.json()
@@ -55,96 +94,96 @@ export const generateImage = async (prompt, model = defaultImageModel) => {
             throw new Error('No image generated')
         }
 
-        // Return the image URL
+        console.log('[Bytez] Generated successfully')
         return data.data[0].url
 
     } catch (error) {
-        console.error('Image generation error:', error.message)
+        console.error('[Bytez] Error:', error.message)
         throw error
     }
 }
 
 /**
- * Generate multiple images for a website project
+ * Generate multiple images - DUAL PROVIDER with smart fallback
  * @param {Array<string>} prompts - Array of image descriptions
- * @param {string} model - Model to use
+ * @param {string} provider - 'pollinations' (free, default) or 'bytez' (paid)
  * @returns {Promise<Array<string>>} - Array of image URLs
  */
-export const generateMultipleImages = async (prompts, model = defaultImageModel) => {
-    const images = []
+export const generateMultipleImages = async (prompts, provider = 'pollinations') => {
+    const limitedPrompts = prompts.slice(0, 3) // Max 3 images
     
-    for (const prompt of prompts) {
-        try {
-            const imageUrl = await generateImage(prompt, model)
-            images.push(imageUrl)
-            // Add small delay to avoid rate limiting
-            await new Promise(resolve => setTimeout(resolve, 1000))
-        } catch (error) {
-            console.error(`Failed to generate image for prompt: ${prompt}`, error)
-            // Use placeholder if generation fails
-            images.push(`https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=1200&q=80`)
-        }
+    console.log(`[Image Gen] Generating ${limitedPrompts.length} images using ${provider}`)
+    
+    if (provider === 'pollinations') {
+        // Pollinations: Instant, no API calls
+        const images = limitedPrompts.map(prompt => 
+            generatePollinationsImage(prompt, defaultPollinationsModel)
+        )
+        console.log(`[Pollinations] Generated ${images.length} images instantly (FREE)`)
+        return images
+    } else {
+        // Bytez: Parallel generation with Pollinations fallback
+        const imagePromises = limitedPrompts.map(async (prompt) => {
+            try {
+                return await generateBytezImage(prompt, defaultBytezModel)
+            } catch (error) {
+                console.error(`[Bytez] Failed, using Pollinations fallback`)
+                return generatePollinationsImage(prompt, defaultPollinationsModel)
+            }
+        })
+        
+        const images = await Promise.all(imagePromises)
+        console.log(`[Image Gen] Generated ${images.length} images`)
+        return images
     }
-    
-    return images
 }
 
 /**
  * Extract image requirements from user prompt
  * @param {string} userPrompt - User's website description
- * @returns {Array<string>} - Array of image prompts to generate
+ * @returns {Array<string>} - Array of image prompts (max 3)
  */
 export const extractImageRequirements = (userPrompt) => {
     const imagePrompts = []
     const lowerPrompt = userPrompt.toLowerCase()
     
-    // Check if user wants images
+    // Check if user wants AI images
     const wantsImages = 
-        lowerPrompt.includes('image') ||
-        lowerPrompt.includes('photo') ||
-        lowerPrompt.includes('picture') ||
-        lowerPrompt.includes('visual') ||
-        lowerPrompt.includes('illustration') ||
-        lowerPrompt.includes('generate images')
+        lowerPrompt.includes('ai image') ||
+        lowerPrompt.includes('ai-generated') ||
+        lowerPrompt.includes('generate image') ||
+        lowerPrompt.includes('custom image') ||
+        lowerPrompt.includes('create image')
     
     if (!wantsImages) {
         return imagePrompts
     }
 
-    // Extract context for image generation
-    const context = userPrompt.substring(0, 200)
-    
-    // Generate standard image prompts based on website type
+    // Generate prompts based on website type
     if (lowerPrompt.includes('portfolio')) {
         imagePrompts.push(
-            `Professional portfolio hero image, modern design, high quality`,
-            `Creative workspace with laptop and design tools`,
-            `Professional headshot placeholder, neutral background`
+            `Professional portfolio hero image, modern minimalist design`,
+            `Creative workspace with laptop, clean aesthetic`
         )
     } else if (lowerPrompt.includes('restaurant') || lowerPrompt.includes('food')) {
         imagePrompts.push(
-            `Delicious gourmet food plating, restaurant quality`,
-            `Modern restaurant interior, elegant ambiance`,
-            `Chef preparing food in professional kitchen`
+            `Gourmet food plating, professional photography`,
+            `Modern restaurant interior, elegant design`
         )
     } else if (lowerPrompt.includes('ecommerce') || lowerPrompt.includes('shop')) {
         imagePrompts.push(
-            `Modern product photography, clean background`,
-            `Shopping experience, online store concept`,
-            `Product showcase, professional lighting`
+            `Product photography, clean white background`,
+            `Modern shopping experience, minimalist design`
         )
-    } else if (lowerPrompt.includes('blog') || lowerPrompt.includes('article')) {
+    } else if (lowerPrompt.includes('blog')) {
         imagePrompts.push(
-            `Blog header image, modern and clean`,
-            `Writing and content creation workspace`,
-            `Digital publishing concept`
+            `Blog header image, modern clean design`,
+            `Writing workspace, minimalist aesthetic`
         )
     } else {
-        // Generic website images
         imagePrompts.push(
-            `Modern website hero image, professional and clean`,
-            `Business concept, technology and innovation`,
-            `Abstract background, gradient colors`
+            `Modern website hero image, professional clean design`,
+            `Abstract gradient background, modern colors`
         )
     }
     
@@ -152,4 +191,4 @@ export const extractImageRequirements = (userPrompt) => {
 }
 
 export const availableImageModels = imageModels
-export { defaultImageModel }
+export { defaultBytezModel, defaultPollinationsModel }

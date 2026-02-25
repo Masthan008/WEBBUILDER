@@ -287,14 +287,19 @@ export const generateWebsite = async (req, res) => {
         
         console.log(`AI Detection: Full-Stack=${wantsFullStack}, AI Images=${wantsAIImages}`)
 
-        // Generate AI images if requested
+        // Generate AI images if requested (Pollinations by default, Bytez as option)
         let generatedImages = []
-        if (wantsAIImages && process.env.BYTEZ_API_KEY) {
+        if (wantsAIImages) {
             console.log('User requested AI-generated images')
             try {
                 const imagePrompts = extractImageRequirements(prompt)
                 if (imagePrompts.length > 0) {
-                    generatedImages = await generateMultipleImages(imagePrompts)
+                    // Use Pollinations by default (FREE, instant)
+                    // Use Bytez only if explicitly configured
+                    const imageProvider = process.env.USE_BYTEZ_IMAGES === 'true' ? 'bytez' : 'pollinations'
+                    console.log(`Using ${imageProvider} for image generation`)
+                    
+                    generatedImages = await generateMultipleImages(imagePrompts, imageProvider)
                     console.log(`Successfully generated ${generatedImages.length} AI images`)
                 }
             } catch (error) {
