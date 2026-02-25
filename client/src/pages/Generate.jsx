@@ -1,5 +1,5 @@
 import { ArrowLeft, ChevronDown, Sparkles } from 'lucide-react'
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from "motion/react"
 import { useState } from 'react'
@@ -45,8 +45,6 @@ function Generate() {
     const [selectedModel, setSelectedModel] = useState("openrouter")
     const [showModelDropdown, setShowModelDropdown] = useState(false)
     const [codeSnippet, setCodeSnippet] = useState("")
-    const [codeType, setCodeType] = useState("html")
-    const [generateImages, setGenerateImages] = useState(false)
     const [showTemplates, setShowTemplates] = useState(false)
     const [selectedCategory, setSelectedCategory] = useState("all")
     
@@ -54,17 +52,10 @@ function Generate() {
         setLoading(true)
         setError("")
         
-        // Add image generation instruction to prompt if enabled
-        let finalPrompt = prompt
-        if (generateImages) {
-            finalPrompt += "\n\nIMPORTANT: Generate images for this website using AI. Include relevant, high-quality images that match the website theme."
-        }
-        
         try {
             const result = await axios.post(`${serverUrl}/api/website/generate`, { 
-                prompt: finalPrompt, 
-                provider: selectedModel,
-                codeType: codeType
+                prompt: prompt, 
+                provider: selectedModel
             }, { withCredentials: true })
             
             console.log('Generation successful:', result.data)
@@ -184,64 +175,10 @@ function Generate() {
                         <span className='block bg-linear-to-r from-white to-zinc-400 bg-clip-text text-transparent'>Real AI Power</span>
                     </h1>
                     <p className='text-zinc-400 max-w-2xl mx-auto'>
-                        This process may take several minutes.
-                        StackStudio focuses on quality, not shortcuts.
+                        Just describe what you want. AI will automatically detect if you need HTML, full-stack code, or AI-generated images.
                     </p>
 
                 </motion.div>
-                
-                {/* Code Type Selector */}
-                <div className='mb-6'>
-                    <label className='text-sm text-zinc-400 mb-2 block'>Code Type</label>
-                    <div className='flex gap-3'>
-                        <button
-                            onClick={() => setCodeType("html")}
-                            className={`flex-1 px-6 py-4 rounded-xl border transition ${
-                                codeType === "html"
-                                    ? 'bg-white/10 border-white/30 text-white'
-                                    : 'bg-black/60 border-white/10 text-zinc-400 hover:border-white/20'
-                            }`}
-                        >
-                            <div className='text-left'>
-                                <div className='text-sm font-medium mb-1'>HTML Only</div>
-                                <div className='text-xs text-zinc-500'>Pure HTML, CSS & JavaScript</div>
-                            </div>
-                        </button>
-                        <button
-                            onClick={() => setCodeType("fullstack")}
-                            className={`flex-1 px-6 py-4 rounded-xl border transition ${
-                                codeType === "fullstack"
-                                    ? 'bg-white/10 border-white/30 text-white'
-                                    : 'bg-black/60 border-white/10 text-zinc-400 hover:border-white/20'
-                            }`}
-                        >
-                            <div className='text-left'>
-                                <div className='text-sm font-medium mb-1'>Full Stack</div>
-                                <div className='text-xs text-zinc-500'>Frontend + Backend code</div>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-                
-                {/* AI Image Generation Toggle */}
-                <div className='mb-6'>
-                    <div className='flex items-center justify-between p-4 rounded-xl bg-black/60 border border-white/10'>
-                        <div>
-                            <label className='text-sm font-medium text-white mb-1 block'>AI Image Generation</label>
-                            <p className='text-xs text-zinc-500'>Generate custom images using AI (requires Bytez API)</p>
-                        </div>
-                        <button
-                            onClick={() => setGenerateImages(!generateImages)}
-                            className={`relative w-14 h-7 rounded-full transition ${
-                                generateImages ? 'bg-blue-500' : 'bg-zinc-700'
-                            }`}
-                        >
-                            <div className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white transition-transform ${
-                                generateImages ? 'translate-x-7' : 'translate-x-0'
-                            }`}></div>
-                        </button>
-                    </div>
-                </div>
                 
                 {/* AI Model Selector */}
                 <div className='mb-6'>
@@ -371,10 +308,15 @@ function Generate() {
                         <textarea
                             onChange={(e) => setPrompt(e.target.value)}
                             value={prompt}
-                            placeholder='Describe your website in detail...'
+                            placeholder='Example: "Create a portfolio website with AI-generated images" or "Build a full-stack e-commerce site with Node.js backend"'
                             className='w-full h-56 p-6 rounded-3xl bg-black/60 border border-white/10 outline-none resize-none text-sm leading-relaxed focus:ring-2 focus:ring-white/20'></textarea>
                     </div>
                     
+                    <div className='mt-4 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20'>
+                        <p className='text-xs text-blue-300'>
+                            💡 <strong>Tip:</strong> AI automatically detects your needs. Mention "AI images" for custom image generation, "full-stack" or "backend" for server code, or just describe your site for HTML/CSS/JS.
+                        </p>
+                    </div>
 
                     {error && <p className='mt-4 text-sm text-red-400'>{error}</p>}
 
@@ -384,7 +326,7 @@ function Generate() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.96 }}
                         onClick={handleGenerateWebsite}
-                        disabled={!prompt.trim() && loading}
+                        disabled={!prompt.trim() || loading}
                         className={`px-14 py-4 rounded-2xl font-semibold text-lg ${prompt.trim() && !loading
                             ? "bg-white text-black"
                             : "bg-white/20 text-zinc-400 cursor-not-allowed"

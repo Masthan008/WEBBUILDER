@@ -240,12 +240,11 @@ export const generateWebsite = async (req, res) => {
     try {
         console.log('Generate website request received:', {
             provider: req.body.provider,
-            codeType: req.body.codeType,
             promptLength: req.body.prompt?.length,
             userId: req.user?._id
         })
         
-        const { prompt, provider = "openrouter", codeType = "html" } = req.body
+        const { prompt, provider = "openrouter" } = req.body
         if (!prompt) {
             return res.status(400).json({ message: "prompt is required" })
         }
@@ -258,28 +257,57 @@ export const generateWebsite = async (req, res) => {
             return res.status(400).json({ message: "you have not enough credits to generate a webiste" })
         }
 
-        console.log(`Starting generation with ${provider} for user ${user._id}, codeType: ${codeType}`)
+        console.log(`Starting generation with ${provider} for user ${user._id}`)
 
-        // Check if user wants AI-generated images
-        const imagePrompts = extractImageRequirements(prompt)
-        let generatedImages = []
+        // AI-powered detection of user intent
+        const lowerPrompt = prompt.toLowerCase()
         
-        if (imagePrompts.length > 0 && process.env.BYTEZ_API_KEY) {
-            console.log(`User requested images. Generating ${imagePrompts.length} images...`)
+        // Detect if user wants full-stack code
+        const wantsFullStack = 
+            lowerPrompt.includes('full stack') ||
+            lowerPrompt.includes('fullstack') ||
+            lowerPrompt.includes('full-stack') ||
+            lowerPrompt.includes('backend') ||
+            lowerPrompt.includes('server') ||
+            lowerPrompt.includes('api') ||
+            lowerPrompt.includes('database') ||
+            lowerPrompt.includes('node.js') ||
+            lowerPrompt.includes('express') ||
+            lowerPrompt.includes('mongodb') ||
+            lowerPrompt.includes('postgresql')
+        
+        // Detect if user wants AI-generated images
+        const wantsAIImages = 
+            lowerPrompt.includes('ai image') ||
+            lowerPrompt.includes('ai-generated image') ||
+            lowerPrompt.includes('generate image') ||
+            lowerPrompt.includes('custom image') ||
+            lowerPrompt.includes('create image') ||
+            lowerPrompt.includes('ai photo')
+        
+        console.log(`AI Detection: Full-Stack=${wantsFullStack}, AI Images=${wantsAIImages}`)
+
+        // Generate AI images if requested
+        let generatedImages = []
+        if (wantsAIImages && process.env.BYTEZ_API_KEY) {
+            console.log('User requested AI-generated images')
             try {
-                generatedImages = await generateMultipleImages(imagePrompts)
-                console.log(`Successfully generated ${generatedImages.length} images`)
+                const imagePrompts = extractImageRequirements(prompt)
+                if (imagePrompts.length > 0) {
+                    generatedImages = await generateMultipleImages(imagePrompts)
+                    console.log(`Successfully generated ${generatedImages.length} AI images`)
+                }
             } catch (error) {
-                console.error('Image generation failed, continuing without custom images:', error.message)
+                console.error('AI image generation failed, will use Unsplash instead:', error.message)
             }
         }
 
-        // Choose the appropriate prompt based on code type
-        let finalPrompt = codeType === "fullstack" 
+        // Choose the appropriate prompt based on detected intent
+        let finalPrompt = wantsFullStack 
             ? fullStackPrompt.replace("{USER_PROMPT}", prompt)
-            : masterPrompt.replace("USER_PROMPT", prompt)
+            : masterPrompt.replace("{USER_PROMPT}", prompt)
         
-        // If images were generated, add them to the prompt
+        // Add AI-generated images to prompt if available
         if (generatedImages.length > 0) {
             finalPrompt += `\n\n--------------------------------------------------
 AI-GENERATED IMAGES AVAILABLE
@@ -292,6 +320,17 @@ IMPORTANT:
 - These are real AI-generated images matching the website theme
 - Do NOT use placeholder images from Unsplash
 - Add proper alt text describing each image
+`
+        } else {
+            // Always use Unsplash images by default
+            finalPrompt += `\n\n--------------------------------------------------
+DEFAULT IMAGE STRATEGY
+--------------------------------------------------
+ALWAYS use high-quality images from Unsplash:
+- Format: https://images.unsplash.com/photo-[id]?auto=format&fit=crop&w=1200&q=80
+- Choose relevant images based on website theme
+- Use multiple different images (not the same one)
+- Add proper alt text for accessibility
 `
         }
         
