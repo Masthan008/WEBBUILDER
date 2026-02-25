@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { serverUrl } from '../App'
 import { useState } from 'react'
-import { ArrowLeft, AlertCircle, Check, CheckCircle, Code, Code2, Copy, Download, Github, Info, Lock, MessageCircle, MessageSquare, Monitor, Palette, Pencil, Redo, Rocket, RotateCcw, Search, Send, Smartphone, Tablet, Undo, X } from 'lucide-react'
+import { ArrowLeft, AlertCircle, Check, CheckCircle, Code, Code2, Copy, Download, Github, Grid3x3, Info, Lock, MessageCircle, MessageSquare, Monitor, Palette, Pencil, Plug, Redo, Rocket, RotateCcw, Search, Send, Smartphone, Sparkles, Tablet, Undo, X } from 'lucide-react'
 import { useRef } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useSelector } from 'react-redux'
@@ -12,6 +12,9 @@ import toast from 'react-hot-toast'
 import { formatDistanceToNow } from 'date-fns'
 import { themes, applyThemeToCode } from '../data/themes'
 import { analyzeSEO, generateSEOPrompt } from '../utils/seoAnalyzer'
+import ComponentLibrary from '../components/ComponentLibrary'
+import AnimationLibrary from '../components/AnimationLibrary'
+import IntegrationsHub from '../components/IntegrationsHub'
 
 import Editor from '@monaco-editor/react';
 function WebsiteEditor() {
@@ -42,6 +45,9 @@ function WebsiteEditor() {
     const [showGithubExport, setShowGithubExport] = useState(false)
     const [showSEO, setShowSEO] = useState(false)
     const [seoAnalysis, setSeoAnalysis] = useState(null)
+    const [showComponents, setShowComponents] = useState(false)
+    const [showAnimations, setShowAnimations] = useState(false)
+    const [showIntegrations, setShowIntegrations] = useState(false)
     
     const isPro = userData?.plan === "pro" || userData?.plan === "enterprise"
     const thinkingSteps = [
@@ -294,6 +300,24 @@ git push -u origin main
         }, 100)
     }
 
+    const handleAddComponent = (component) => {
+        setShowComponents(false)
+        setPrompt(component.prompt)
+        toast.success(`${component.name} component loaded!`)
+    }
+
+    const handleAddAnimation = (animation) => {
+        setShowAnimations(false)
+        setPrompt(animation.prompt)
+        toast.success(`${animation.name} animation loaded!`)
+    }
+
+    const handleAddIntegration = (integration) => {
+        setShowIntegrations(false)
+        setPrompt(integration.prompt)
+        toast.success(`${integration.name} integration loaded!`)
+    }
+
 
     useEffect(() => {
         if (!updateLoading) return;
@@ -488,6 +512,30 @@ git push -u origin main
                             title="SEO Analyzer"
                         >
                             <Search size={18} />
+                        </button>
+
+                        <button 
+                            className='p-2 hover:bg-white/10 rounded-lg transition' 
+                            onClick={() => setShowComponents(true)}
+                            title="Component Library"
+                        >
+                            <Grid3x3 size={18} />
+                        </button>
+
+                        <button 
+                            className='p-2 hover:bg-white/10 rounded-lg transition' 
+                            onClick={() => setShowAnimations(true)}
+                            title="Animation Library"
+                        >
+                            <Sparkles size={18} />
+                        </button>
+
+                        <button 
+                            className='p-2 hover:bg-white/10 rounded-lg transition' 
+                            onClick={() => setShowIntegrations(true)}
+                            title="Integrations Hub"
+                        >
+                            <Plug size={18} />
                         </button>
 
                         {/* Undo/Redo Buttons */}
@@ -959,6 +1007,32 @@ git push -u origin main`}
                 )}
             </AnimatePresence>
 
+            {/* Component Library */}
+            <AnimatePresence>
+                <ComponentLibrary
+                    isOpen={showComponents}
+                    onClose={() => setShowComponents(false)}
+                    onSelectComponent={handleAddComponent}
+                />
+            </AnimatePresence>
+
+            {/* Animation Library */}
+            <AnimatePresence>
+                <AnimationLibrary
+                    isOpen={showAnimations}
+                    onClose={() => setShowAnimations(false)}
+                    onSelectAnimation={handleAddAnimation}
+                />
+            </AnimatePresence>
+
+            {/* Integrations Hub */}
+            <AnimatePresence>
+                <IntegrationsHub
+                    isOpen={showIntegrations}
+                    onClose={() => setShowIntegrations(false)}
+                    onSelectIntegration={handleAddIntegration}
+                />
+            </AnimatePresence>
 
         </div>
     )
@@ -1003,6 +1077,8 @@ git push -u origin main`}
 
 
 }
+
+
 
 
 
