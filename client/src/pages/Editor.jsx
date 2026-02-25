@@ -4,10 +4,12 @@ import { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { serverUrl } from '../App'
 import { useState } from 'react'
-import { ArrowLeft, Code, Code2, Download, Lock, MessageCircle, MessageSquare, Monitor, Rocket, Send, X } from 'lucide-react'
+import { ArrowLeft, Check, Code, Code2, Copy, Download, Lock, MessageCircle, MessageSquare, Monitor, Pencil, Rocket, Send, X } from 'lucide-react'
 import { useRef } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useSelector } from 'react-redux'
+import toast from 'react-hot-toast'
+import { formatDistanceToNow } from 'date-fns'
 
 import Editor from '@monaco-editor/react';
 function WebsiteEditor() {
@@ -26,6 +28,9 @@ function WebsiteEditor() {
     const [showFullPreview, setShowFullPreview] = useState(false)
     const [showChat, setShowChat] = useState(false)
     const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+    const [editingTitle, setEditingTitle] = useState(false)
+    const [title, setTitle] = useState("")
+    const [codeCopied, setCodeCopied] = useState(false)
     
     const isPro = userData?.plan === "pro" || userData?.plan === "enterprise"
     const thinkingSteps = [
@@ -47,21 +52,59 @@ function WebsiteEditor() {
             setUpdateLoading(false)
             setMessages((m) => [...m, { role: "ai", content: result.data.message }])
             setCode(result.data.code)
+            setWebsite(prev => ({ ...prev, updatedAt: new Date().toISOString() }))
+            toast.success('Website updated successfully!')
         } catch (error) {
             setUpdateLoading(false)
             console.log(error)
+            toast.error('Failed to update website')
         }
     }
 
     const handleDeploy = async () => {
-            try {
-                const result = await axios.get(`${serverUrl}/api/website/deploy/${website._id}`, { withCredentials: true })
-                window.open(`${result.data.url}`, "_blank")
-               
-            } catch (error) {
-                console.log(error)
-            }
+        try {
+            const result = await axios.get(`${serverUrl}/api/website/deploy/${website._id}`, { withCredentials: true })
+            window.open(`${result.data.url}`, "_blank")
+            toast.success('Website deployed successfully!')
+        } catch (error) {
+            console.log(error)
+            toast.error('Failed to deploy website')
         }
+    }
+
+    const handleCopyCode = async () => {
+        if (!isPro) {
+            setShowUpgradeModal(true)
+            return
+        }
+        await navigator.clipboard.writeText(code)
+        setCodeCopied(true)
+        toast.success('Code copied to clipboard!')
+        setTimeout(() => setCodeCopied(false), 2000)
+    }
+
+    const handleUpdateTitle = async () => {
+        if (!title.trim() || title === website.title) {
+            setEditingTitle(false)
+            setTitle(website.title)
+            return
+        }
+        
+        try {
+            await axios.patch(`${serverUrl}/api/website/update-title/${id}`, 
+                { title: title.trim() }, 
+                { withCredentials: true }
+            )
+            setWebsite(prev => ({ ...prev, title: title.trim() }))
+            setEditingTitle(false)
+            toast.success('Title updated!')
+        } catch (error) {
+            console.log(error)
+            toast.error('Failed to update title')
+            setTitle(website.title)
+            setEditingTitle(false)
+        }
+    }
 
 
     useEffect(() => {
@@ -80,6 +123,7 @@ function WebsiteEditor() {
                 setWebsite(result.data)
                 setCode(result.data.latestCode)
                 setMessages(result.data.conversation)
+                setTitle(result.data.title)
             } catch (error) {
                 console.log(error)
                 setError(error.response.data.message)
@@ -163,7 +207,14 @@ function WebsiteEditor() {
 
             <div className='flex-1 flex flex-col'>
                 <div className='h-14 px-4 flex justify-between items-center border-b border-white/10 bg-black/80'>
-                    <span className='text-xs text-zinc-400'>Live Preview</span>
+                    <div className='flex items-center gap-3'>
+                        <span className='text-xs text-zinc-400'>Live Preview</span>
+                        {website.updatedAt && (
+                            <span className='text-xs text-zinc-500'>
+                                Last saved: {formatDistanceToNow(new Date(website.updatedAt), { addSuffix: true })}
+                            </span>
+                        )}
+                    </div>
                     <div className='flex gap-2'>
                         {website.deployed ?"": <button className='flex items-center gap-2 px-4 py-1.5 rounded-lg bg-linear-to-r from-indigo-500 to-purple-500 text-sm font-semibold hover:scale-105 transition'
                         onClick={handleDeploy}
@@ -178,6 +229,15 @@ function WebsiteEditor() {
                         >
                             {isPro ? <Code2 size={18} /> : <Lock size={18} className='text-yellow-500' />}
                         </button>
+                        
+                        <button 
+                            className='p-2'
+                            onClick={handleCopyCode}
+                            title={isPro ? "Copy Code" : "Pro feature"}
+                        >
+                            {codeCopied ? <Check size={18} className='text-green-500' /> : isPro ? <Copy size={18} /> : <Lock size={18} className='text-yellow-500' />}
+                        </button>
+                        
                         <button 
                             className='p-2'
                             onClick={() => {
@@ -192,6 +252,7 @@ function WebsiteEditor() {
                                 a.download = `${website.title || 'website'}.html`
                                 a.click()
                                 URL.revokeObjectURL(url)
+                                toast.success('Code downloaded!')
                             }}
                             title={isPro ? "Download Code" : "Pro feature"}
                         >
@@ -371,7 +432,34 @@ function WebsiteEditor() {
     function Header({onclose}) {
         return (
             <div className='h-14 px-4 flex items-center justify-between border-b border-white/10'>
-                <span className='font-semibold truncate'>{website.title}</span>
+                {editingTitle ? (
+                    <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        onBlur={handleUpdateTitle}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleUpdateTitle()
+                            if (e.key === 'Escape') {
+                                setEditingTitle(false)
+                                setTitle(website.title)
+                            }
+                        }}
+                        autoFocus
+                        className='flex-1 font-semibold bg-white/5 border border-white/20 rounded px-2 py-1 outline-none focus:ring-2 focus:ring-white/30'
+                    />
+                ) : (
+                    <div className='flex items-center gap-2 flex-1'>
+                        <span className='font-semibold truncate'>{website.title}</span>
+                        <button
+                            onClick={() => setEditingTitle(true)}
+                            className='p-1 hover:bg-white/10 rounded transition'
+                            title='Edit title'
+                        >
+                            <Pencil size={14} />
+                        </button>
+                    </div>
+                )}
                 {onclose &&  <button onClick={onclose}><X size={18} color='white'/></button>}
            
             </div>

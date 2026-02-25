@@ -1,10 +1,12 @@
-import { ArrowLeft, Check, Rocket, Share2, Trash2 } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
+import { ArrowLeft, Check, Rocket, Search, Share2, Trash2 } from 'lucide-react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { motion } from "motion/react"
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { serverUrl } from '../App'
+import toast from 'react-hot-toast'
+
 function Dashboard() {
     const { userData } = useSelector(state => state.user)
     const navigate = useNavigate()
@@ -13,6 +15,9 @@ function Dashboard() {
     const [error, setError] = useState("")
     const [copiedId, setCopiedId] = useState(null)
     const [deletingId, setDeletingId] = useState(null)
+    const [searchQuery, setSearchQuery] = useState("")
+    const [filterBy, setFilterBy] = useState("all")
+    const [sortBy, setSortBy] = useState("newest")
     
     const handleDeploy = async (id) => {
         try {
@@ -25,8 +30,10 @@ function Dashboard() {
             : w
         )
       );
+            toast.success('Website deployed successfully!')
         } catch (error) {
             console.log(error)
+            toast.error('Failed to deploy website')
         }
     }
 
@@ -38,8 +45,10 @@ function Dashboard() {
             await axios.delete(`${serverUrl}/api/website/delete/${id}`, { withCredentials: true })
             setWebsites((prev) => prev.filter((w) => w._id !== id))
             setDeletingId(null)
+            toast.success('Website deleted successfully')
         } catch (error) {
             console.log(error)
+            toast.error('Failed to delete website')
             setDeletingId(null)
         }
     }
@@ -64,8 +73,41 @@ function Dashboard() {
     const handleCopy = async (site) => {
         await navigator.clipboard.writeText(site.deployUrl)
         setCopiedId(site._id)
+        toast.success('Link copied to clipboard!')
         setTimeout(() => setCopiedId(null), 2000)
     }
+
+    // Filter and sort websites
+    const filteredWebsites = useMemo(() => {
+        if (!websites) return []
+        
+        let filtered = [...websites]
+        
+        // Search filter
+        if (searchQuery) {
+            filtered = filtered.filter(w => 
+                w.title.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+        }
+        
+        // Deployment filter
+        if (filterBy === "deployed") {
+            filtered = filtered.filter(w => w.deployed)
+        } else if (filterBy === "not-deployed") {
+            filtered = filtered.filter(w => !w.deployed)
+        }
+        
+        // Sort
+        if (sortBy === "newest") {
+            filtered.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+        } else if (sortBy === "oldest") {
+            filtered.sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt))
+        } else if (sortBy === "name") {
+            filtered.sort((a, b) => a.title.localeCompare(b.title))
+        }
+        
+        return filtered
+    }, [websites, searchQuery, filterBy, sortBy])
 
     return (
         <div className='min-h-screen bg-[#050505] text-white'>
@@ -90,6 +132,45 @@ function Dashboard() {
                     <h1 className='text-3xl font-bold'>{userData.name}</h1>
                 </motion.div>
 
+                {/* Search and Filter */}
+                {!loading && websites && websites.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="mb-8 flex flex-col md:flex-row gap-4"
+                    >
+                        <div className="relative flex-1">
+                            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
+                            <input
+                                type="text"
+                                placeholder="Search websites..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:ring-2 focus:ring-white/20 transition"
+                            />
+                        </div>
+                        <select
+                            value={filterBy}
+                            onChange={(e) => setFilterBy(e.target.value)}
+                            className="px-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:ring-2 focus:ring-white/20 transition cursor-pointer"
+                        >
+                            <option value="all">All Websites</option>
+                            <option value="deployed">Deployed Only</option>
+                            <option value="not-deployed">Not Deployed</option>
+                        </select>
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="px-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:ring-2 focus:ring-white/20 transition cursor-pointer"
+                        >
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="name">Name (A-Z)</option>
+                        </select>
+                    </motion.div>
+                )}
+
                 {loading && (
                     <div className="mt-24 text-center text-zinc-400">Loading Your Websites...</div>
                 )}
@@ -102,9 +183,13 @@ function Dashboard() {
                     <div className="mt-24 text-center text-zinc-400">You have no websites</div>
                 )}
 
-                {!loading && !error && websites?.length > 0 && (
+                {!loading && !error && websites?.length > 0 && filteredWebsites.length === 0 && (
+                    <div className="mt-24 text-center text-zinc-400">No websites match your search</div>
+                )}
+
+                {!loading && !error && filteredWebsites.length > 0 && (
                     <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8'>
-                        {websites.map((w, i) => {
+                        {filteredWebsites.map((w, i) => {
 
                             const copied = copiedId === w._id
 

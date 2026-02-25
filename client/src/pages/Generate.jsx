@@ -1,10 +1,12 @@
-import { ArrowLeft, ChevronDown } from 'lucide-react'
+import { ArrowLeft, ChevronDown, Sparkles } from 'lucide-react'
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from "motion/react"
 import { useState } from 'react'
 import axios from "axios"
 import { serverUrl } from '../App'
+import { templates, categories } from '../data/templates'
+import toast from 'react-hot-toast'
 
 const PHASES = [
     "Analyzing your idea…",
@@ -43,8 +45,10 @@ function Generate() {
     const [selectedModel, setSelectedModel] = useState("openrouter")
     const [showModelDropdown, setShowModelDropdown] = useState(false)
     const [codeSnippet, setCodeSnippet] = useState("")
-    const [codeType, setCodeType] = useState("html") // "html" or "fullstack"
-    const [generateImages, setGenerateImages] = useState(false) // Toggle for AI image generation
+    const [codeType, setCodeType] = useState("html")
+    const [generateImages, setGenerateImages] = useState(false)
+    const [showTemplates, setShowTemplates] = useState(false)
+    const [selectedCategory, setSelectedCategory] = useState("all")
     
     const handleGenerateWebsite = async () => {
         setLoading(true)
@@ -66,6 +70,7 @@ function Generate() {
             console.log('Generation successful:', result.data)
             setProgress(100)
             setLoading(false)
+            toast.success('Website generated successfully!')
             navigate(`/editor/${result.data.websiteId}`)
         } catch (error) {
             setLoading(false)
@@ -75,30 +80,44 @@ function Generate() {
             
             // Handle different error types
             if (error.response) {
-                // Server responded with error status
                 const status = error.response.status
                 const message = error.response.data?.message || error.response.data
                 
                 if (status === 404) {
                     setError("API endpoint not found. Please check if the backend server is running correctly.")
+                    toast.error("API endpoint not found")
                 } else if (status === 401) {
                     setError("Authentication failed. Please log in again.")
+                    toast.error("Authentication failed")
                 } else if (status === 400) {
                     setError(message || "Invalid request. Please check your input.")
+                    toast.error(message || "Invalid request")
                 } else if (status === 500) {
                     setError(message || "Server error. Please try again or use a different AI model.")
+                    toast.error("Server error")
                 } else {
                     setError(message || `Error ${status}: Something went wrong`)
+                    toast.error("Something went wrong")
                 }
             } else if (error.request) {
-                // Request made but no response received
                 setError("Cannot reach the server. Please check your internet connection and ensure the backend is running.")
+                toast.error("Cannot reach server")
             } else {
-                // Something else happened
                 setError(error.message || "An unexpected error occurred")
+                toast.error("Unexpected error")
             }
         }
     }
+
+    const handleUseTemplate = (template) => {
+        setPrompt(template.prompt)
+        setShowTemplates(false)
+        toast.success(`Template "${template.name}" loaded!`)
+    }
+
+    const filteredTemplates = selectedCategory === "all" 
+        ? templates 
+        : templates.filter(t => t.category.toLowerCase() === selectedCategory)
 
     useEffect(() => {
         if (!loading) {
@@ -285,7 +304,69 @@ function Generate() {
                 </div>
 
                 <div className='mb-14'>
-                    <h1 className='text-xl font-semibold mb-2'>Describe your website</h1>
+                    <div className='flex items-center justify-between mb-2'>
+                        <h1 className='text-xl font-semibold'>Describe your website</h1>
+                        <button
+                            onClick={() => setShowTemplates(!showTemplates)}
+                            className='flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition text-sm'
+                        >
+                            <Sparkles size={16} />
+                            {showTemplates ? 'Hide Templates' : 'Use Template'}
+                        </button>
+                    </div>
+
+                    {/* Templates Section */}
+                    <AnimatePresence>
+                        {showTemplates && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className='mb-6 overflow-hidden'
+                            >
+                                <div className='p-6 rounded-2xl bg-black/60 border border-white/10'>
+                                    <div className='flex gap-2 mb-4 overflow-x-auto pb-2'>
+                                        {categories.map((cat) => (
+                                            <button
+                                                key={cat.id}
+                                                onClick={() => setSelectedCategory(cat.id)}
+                                                className={`px-4 py-2 rounded-lg text-sm whitespace-nowrap transition ${
+                                                    selectedCategory === cat.id
+                                                        ? 'bg-white text-black'
+                                                        : 'bg-white/5 hover:bg-white/10'
+                                                }`}
+                                            >
+                                                {cat.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
+                                        {filteredTemplates.map((template) => (
+                                            <motion.div
+                                                key={template.id}
+                                                whileHover={{ y: -4 }}
+                                                onClick={() => handleUseTemplate(template)}
+                                                className='cursor-pointer rounded-xl overflow-hidden bg-white/5 border border-white/10 hover:border-white/30 transition group'
+                                            >
+                                                <div className='h-32 overflow-hidden bg-black'>
+                                                    <img 
+                                                        src={template.thumbnail} 
+                                                        alt={template.name}
+                                                        className='w-full h-full object-cover group-hover:scale-110 transition-transform duration-300'
+                                                    />
+                                                </div>
+                                                <div className='p-4'>
+                                                    <h3 className='font-semibold mb-1'>{template.name}</h3>
+                                                    <p className='text-xs text-zinc-400 line-clamp-2'>{template.description}</p>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
                     <div className='relative'>
                         <textarea
                             onChange={(e) => setPrompt(e.target.value)}

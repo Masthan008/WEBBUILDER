@@ -539,3 +539,29 @@ export const deleteWebsite = async (req, res) => {
         return res.status(500).json({ message: `delete website error ${error}` })
     }
 }
+
+export const updateTitle = async (req, res) => {
+    try {
+        const { title } = req.body
+        
+        if (!title || !title.trim()) {
+            return res.status(400).json({ message: "title is required" })
+        }
+
+        const website = await Website.findOne({
+            _id: req.params.id,
+            user: req.user._id
+        })
+
+        if (!website) {
+            return res.status(400).json({ message: "website not found" })
+        }
+
+        website.title = title.trim()
+        await website.save()
+
+        return res.status(200).json({ message: "title updated successfully" })
+    } catch (error) {
+        return res.status(500).json({ message: `update title error ${error}` })
+    }
+}
