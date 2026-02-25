@@ -30,7 +30,6 @@ const CODE_SNIPPETS = [
 const AI_MODELS = [
     { id: "openrouter", name: "OpenRouter", model: "DeepSeek Chat", recommended: true },
     { id: "bytez", name: "Bytez AI", model: "GPT-4o" },
-    { id: "chatgpt", name: "ChatGPT", model: "GPT-4o Mini" },
     { id: "groq", name: "Groq", model: "Llama 3.3 70B" },
     { id: "nvidia", name: "NVIDIA DeepSeek", model: "DeepSeek v3.1 Terminus" }
 ]

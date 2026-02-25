@@ -8,12 +8,6 @@ const providers = {
         model: "deepseek/deepseek-chat",
         apiKeyEnv: "OPENROUTER_API_KEY"
     },
-    chatgpt: {
-        name: "ChatGPT",
-        url: "https://api.openai.com/v1/chat/completions",
-        model: "gpt-4o-mini",
-        apiKeyEnv: "OPENAI_API_KEY"
-    },
     bytez: {
         name: "Bytez AI",
         url: "https://api.bytez.com/v1/chat/completions",
