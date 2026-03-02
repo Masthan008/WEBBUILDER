@@ -82,15 +82,27 @@ IMAGES (MANDATORY & RESPONSIVE)
 TECHNICAL RULES (VERY IMPORTANT)
 --------------------------------------------------
 - Output ONE single HTML file
-- Exactly ONE <style> tag
-- Exactly ONE <script> tag
-- NO external CSS / JS / fonts
-- Use system fonts only
+- Exactly ONE <style> tag INSIDE <head>
+- Exactly ONE <script> tag BEFORE </body>
+- NO external CSS files (NO <link rel="stylesheet">)
+- NO external JS files (NO <script src="">)
+- NO external fonts (use system fonts only)
+- ALL CSS must be in <style> tag
+- ALL JavaScript must be in <script> tag
 - iframe srcdoc compatible
 - SPA-style navigation using JavaScript
 - No page reloads
 - No dead UI
 - No broken buttons
+
+CRITICAL: DO NOT CREATE REFERENCES TO:
+❌ styles.css
+❌ script.js
+❌ main.css
+❌ app.js
+❌ ANY external file
+
+EVERYTHING MUST BE EMBEDDED IN ONE HTML FILE.
 --------------------------------------------------
 SPA VISIBILITY RULE (MANDATORY)
 --------------------------------------------------
@@ -371,12 +383,29 @@ ALWAYS use high-quality images from Unsplash:
             })
         }
 
+        // Validate and fix external file references
+        let cleanedCode = parsed.code
+        const hasExternalCSS = cleanedCode.includes('<link') && cleanedCode.includes('stylesheet')
+        const hasExternalJS = cleanedCode.includes('<script') && cleanedCode.includes('src=')
+        
+        if (hasExternalCSS || hasExternalJS) {
+            console.warn('⚠️ Generated code contains external file references, cleaning...')
+            
+            // Remove external CSS links
+            cleanedCode = cleanedCode.replace(/<link[^>]*rel=["']stylesheet["'][^>]*>/gi, '')
+            
+            // Remove external JS script tags (but keep inline scripts)
+            cleanedCode = cleanedCode.replace(/<script[^>]*src=["'][^"']*["'][^>]*><\/script>/gi, '')
+            
+            console.log('✅ Removed external file references')
+        }
+
         console.log('Website generated successfully, saving to database')
 
         const website = await Website.create({
             user: user._id,
             title: prompt.slice(0, 60),
-            latestCode: parsed.code,
+            latestCode: cleanedCode,
             conversation: [
                 {
                     role: "user",
@@ -483,13 +512,29 @@ RETURN RAW JSON ONLY:
             return res.status(400).json({ message: "ai returned invalid response" })
         }
 
+        // Validate and fix external file references
+        let cleanedCode = parsed.code
+        const hasExternalCSS = cleanedCode.includes('<link') && cleanedCode.includes('stylesheet')
+        const hasExternalJS = cleanedCode.includes('<script') && cleanedCode.includes('src=')
+        
+        if (hasExternalCSS || hasExternalJS) {
+            console.warn('⚠️ Updated code contains external file references, cleaning...')
+            
+            // Remove external CSS links
+            cleanedCode = cleanedCode.replace(/<link[^>]*rel=["']stylesheet["'][^>]*>/gi, '')
+            
+            // Remove external JS script tags (but keep inline scripts)
+            cleanedCode = cleanedCode.replace(/<script[^>]*src=["'][^"']*["'][^>]*><\/script>/gi, '')
+            
+            console.log('✅ Removed external file references')
+        }
 
         website.conversation.push(
             { role: "user", content: prompt },
             { role: "ai", content: parsed.message },
         )
 
-        website.latestCode = parsed.code
+        website.latestCode = cleanedCode
 
         await website.save()
         user.credits = user.credits - 5
@@ -497,7 +542,7 @@ RETURN RAW JSON ONLY:
 
         return res.status(200).json({
             message:parsed.message,
-            code:parsed.code,
+            code:cleanedCode,
             remainingCredits: user.credits
         })
 
