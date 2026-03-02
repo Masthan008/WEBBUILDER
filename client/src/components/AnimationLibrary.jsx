@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { Search, Sparkles, X } from 'lucide-react'
+import { Search, Sparkles, X, Info } from 'lucide-react'
 import { useState } from 'react'
 import { animationCategories, getAnimationsByCategory, searchAnimations, getAnimationComplexity } from '../data/animations'
 
@@ -134,9 +134,10 @@ function AnimationLibrary({ isOpen, onClose, onSelectAnimation }) {
                 )}
 
                 <div className="mt-6 space-y-3">
-                    <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                    <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-start gap-3">
+                        <Info size={16} className="text-blue-400 flex-shrink-0 mt-0.5" />
                         <p className="text-xs text-blue-300">
-                            💡 <strong>Tip:</strong> Click any animation to load its prompt. AI will add the animation code while preserving your existing design.
+                            <strong>Tip:</strong> Click any animation to load its prompt. AI will add the animation code while preserving your existing design.
                         </p>
                     </div>
                     

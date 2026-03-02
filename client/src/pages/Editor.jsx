@@ -291,18 +291,21 @@ git push -u origin main
     const handleAddComponent = (component) => {
         setShowComponents(false)
         setPrompt(component.prompt)
+        setShowChat(true) // Show chat panel so user can see the prompt
         toast.success(`${component.name} component loaded!`)
     }
 
     const handleAddAnimation = (animation) => {
         setShowAnimations(false)
         setPrompt(animation.prompt)
+        setShowChat(true) // Show chat panel so user can see the prompt
         toast.success(`${animation.name} animation loaded!`)
     }
 
     const handleAddIntegration = (integration) => {
         setShowIntegrations(false)
         setPrompt(integration.prompt)
+        setShowChat(true) // Show chat panel so user can see the prompt
         toast.success(`${integration.name} integration loaded!`)
     }
 

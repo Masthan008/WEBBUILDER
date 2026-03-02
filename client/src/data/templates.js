@@ -7,13 +7,13 @@ export const templates = [
         description: "Personal portfolio with projects showcase",
         category: "Personal",
         thumbnail: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=400&q=80",
-        prompt: `Create a modern, professional portfolio website with the following sections:
+        prompt: `Create a modern, professional portfolio website with AI-generated images for the hero section and project thumbnails.
 
 1. Hero Section:
    - Large heading with name
    - Subtitle describing profession (e.g., "Full-Stack Developer")
    - Call-to-action buttons (View Work, Contact)
-   - Professional background gradient
+   - Professional background with AI-generated abstract gradient image
 
 2. About Section:
    - Brief bio (2-3 paragraphs)
@@ -21,7 +21,7 @@ export const templates = [
    - Years of experience
 
 3. Projects Section:
-   - Grid of 6 project cards
+   - Grid of 6 project cards with AI-generated project preview images
    - Each card: image, title, description, tech stack, live/github links
    - Hover effects
 
@@ -335,6 +335,69 @@ Design: Clean, tech-focused, data visualization, dashboard mockups, trust-buildi
    - Map
 
 Design: Energetic, bold colors, fitness imagery, motivational, action-oriented.`
+    },
+    {
+        id: "fullstack-todo",
+        name: "Full-Stack Todo App",
+        description: "Complete todo app with backend",
+        category: "Technology",
+        thumbnail: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&w=400&q=80",
+        prompt: `Create a full-stack todo application with Node.js backend and MongoDB database.
+
+FRONTEND (HTML/CSS/JavaScript):
+- Clean, modern UI
+- Add todo form (title, description, priority)
+- Todo list with checkboxes
+- Edit and delete buttons
+- Filter by status (all, active, completed)
+- Priority colors (high=red, medium=yellow, low=green)
+
+BACKEND (Node.js + Express):
+- RESTful API endpoints:
+  - GET /api/todos - Get all todos
+  - POST /api/todos - Create todo
+  - PUT /api/todos/:id - Update todo
+  - DELETE /api/todos/:id - Delete todo
+- MongoDB connection
+- Error handling middleware
+- CORS enabled
+
+DATABASE (MongoDB):
+- Todo schema: title, description, completed, priority, createdAt
+- Mongoose models
+
+Include setup instructions for running the backend server.`
+    },
+    {
+        id: "ai-image-gallery",
+        name: "AI Image Gallery",
+        description: "Gallery with AI-generated images",
+        category: "Content",
+        thumbnail: "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=400&q=80",
+        prompt: `Create a beautiful image gallery website with AI-generated images for all gallery items.
+
+1. Hero Section:
+   - "AI Art Gallery" heading
+   - Subtitle about AI-generated artwork
+   - AI-generated hero background image
+
+2. Gallery Grid:
+   - Masonry layout with 12+ AI-generated images
+   - Each image: different AI art style (abstract, landscape, portrait, futuristic)
+   - Hover effects with image title
+   - Lightbox on click
+
+3. Categories:
+   - Filter buttons (All, Abstract, Landscapes, Portraits, Futuristic)
+   - Smooth filtering animations
+
+4. About Section:
+   - Information about AI art generation
+   - AI-generated feature image
+
+Design: Modern, art-focused, clean, gallery-style layout with smooth transitions.
+
+IMPORTANT: Use AI-generated images for all gallery items and hero section.`
     }
 ]
 

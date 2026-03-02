@@ -29,7 +29,6 @@ const CODE_SNIPPETS = [
 
 const AI_MODELS = [
     { id: "openrouter", name: "OpenRouter", model: "DeepSeek Chat", recommended: true },
-    { id: "pollinations", name: "Pollinations AI", model: "Free Image Generation" },
     { id: "bytez", name: "Bytez AI", model: "GPT-4o" },
     { id: "groq", name: "Groq", model: "Llama 3.3 70B" },
     { id: "nvidia", name: "NVIDIA DeepSeek", model: "DeepSeek v3.1 Terminus" }
