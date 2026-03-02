@@ -1,5 +1,3 @@
-import OpenAI from 'openai'
-
 // AI Provider configurations
 const providers = {
     openrouter: {
@@ -22,7 +20,7 @@ const providers = {
     },
     nvidia: {
         name: "NVIDIA DeepSeek",
-        url: "https://integrate.api.nvidia.com/v1",
+        url: "https://integrate.api.nvidia.com/v1/chat/completions",
         model: "deepseek-ai/deepseek-v3.1-terminus",
         apiKeyEnv: "NVIDIA_API_KEY"
     }
@@ -41,12 +39,7 @@ export const generateResponse = async (prompt, provider = "openrouter") => {
         throw new Error(`API key not found for ${config.name}`)
     }
 
-    // NVIDIA needs special handling (non-streaming)
-    if (provider === "nvidia") {
-        return await generateNvidiaResponse(prompt, apiKey, config)
-    }
-
-    // OpenAI-compatible format (OpenRouter, Groq)
+    // All providers use OpenAI-compatible format
     try {
         const res = await fetch(config.url, {
             method: 'POST',
@@ -61,72 +54,39 @@ export const generateResponse = async (prompt, provider = "openrouter") => {
                     { role: 'user', content: prompt }
                 ],
                 temperature: 0.2,
-                max_tokens: 4096,
+                max_tokens: 8192,
                 stream: false
             }),
         })
 
         if (!res.ok) {
             const err = await res.text()
-            throw new Error(`${config.name} error: ${err}`)
+            console.error(`${config.name} API error:`, res.status, err)
+            throw new Error(`${config.name} error (${res.status}): ${err}`)
         }
 
         const data = await res.json()
+        
+        if (!data.choices || data.choices.length === 0) {
+            throw new Error(`${config.name} returned no response`)
+        }
+        
         return data.choices[0].message.content
     } catch (error) {
         console.error(`${config.name} fetch error:`, error.message)
-        throw new Error(`${config.name} connection failed. Please try another model or check your internet connection.`)
-    }
-}
-
-// NVIDIA-specific handler using OpenAI SDK (non-streaming for stability)
-async function generateNvidiaResponse(prompt, apiKey, config) {
-    try {
-        const openai = new OpenAI({
-            apiKey: apiKey,
-            baseURL: config.url
-        })
-
-        // Add JSON formatting instruction
-        const enhancedPrompt = `${prompt}
-
-CRITICAL: Return ONLY valid JSON in this exact format:
-{
-  "message": "short confirmation",
-  "code": "complete HTML code"
-}
-NO markdown, NO explanations.`
-
-        const completion = await openai.chat.completions.create({
-            model: config.model,
-            messages: [
-                { role: "system", content: "You are a code generator that returns ONLY valid JSON." },
-                { role: "user", content: enhancedPrompt }
-            ],
-            temperature: 0.2,
-            top_p: 0.7,
-            max_tokens: 8192,
-            stream: false
-        })
-
-        if (!completion.choices || completion.choices.length === 0) {
-            throw new Error('NVIDIA returned no response')
-        }
-
-        return completion.choices[0].message.content
-    } catch (error) {
-        console.error('NVIDIA generation error:', error.message)
         
-        // Provide more specific error messages
-        if (error.message.includes('timeout')) {
-            throw new Error('NVIDIA request timed out. Try using OpenRouter or Groq instead.')
-        } else if (error.message.includes('rate limit')) {
-            throw new Error('NVIDIA rate limit reached. Please use OpenRouter or Groq.')
+        // Provide helpful error messages
+        if (error.message.includes('401')) {
+            throw new Error(`${config.name} authentication failed. Please check your API key.`)
         } else if (error.message.includes('404')) {
-            throw new Error('NVIDIA model not available. Try OpenRouter or Groq instead.')
+            throw new Error(`${config.name} endpoint not found. Try using OpenRouter or Groq instead.`)
+        } else if (error.message.includes('timeout')) {
+            throw new Error(`${config.name} request timed out. Try using OpenRouter or Groq instead.`)
+        } else if (error.message.includes('rate limit')) {
+            throw new Error(`${config.name} rate limit reached. Please use OpenRouter or Groq.`)
         }
         
-        throw new Error(`NVIDIA failed: ${error.message}. Try OpenRouter or Groq instead.`)
+        throw new Error(`${config.name} connection failed: ${error.message}. Try OpenRouter or Groq instead.`)
     }
 }
 
