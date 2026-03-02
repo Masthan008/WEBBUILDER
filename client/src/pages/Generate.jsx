@@ -29,6 +29,7 @@ const CODE_SNIPPETS = [
 
 const AI_MODELS = [
     { id: "openrouter", name: "OpenRouter", model: "DeepSeek Chat", recommended: true },
+    { id: "pollinations", name: "Pollinations AI", model: "Free Image Generation" },
     { id: "bytez", name: "Bytez AI", model: "GPT-4o" },
     { id: "groq", name: "Groq", model: "Llama 3.3 70B" },
     { id: "nvidia", name: "NVIDIA DeepSeek", model: "DeepSeek v3.1 Terminus" }
@@ -312,8 +313,9 @@ function Generate() {
                     </div>
                     
                     <div className='mt-4 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20'>
-                        <p className='text-xs text-blue-300'>
-                            💡 <strong>Tip:</strong> AI automatically detects your needs. Mention "AI images" for custom image generation, "full-stack" or "backend" for server code, or just describe your site for HTML/CSS/JS.
+                        <p className='text-xs text-blue-300 flex items-start gap-2'>
+                            <Sparkles size={14} className='mt-0.5 flex-shrink-0' />
+                            <span><strong>Tip:</strong> AI automatically detects your needs. Mention "AI images" for custom image generation, "full-stack" or "backend" for server code, or just describe your site for HTML/CSS/JS.</span>
                         </p>
                     </div>
 

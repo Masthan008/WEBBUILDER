@@ -29,10 +29,8 @@ function WebsiteEditor() {
     const iframeRef = useRef(null)
     const [updateLoading, setUpdateLoading] = useState(false)
     const [thinkingIndex, setThinkingIndex] = useState(0)
-    const [showCode, setShowCode] = useState(false)
     const [showFullPreview, setShowFullPreview] = useState(false)
     const [showChat, setShowChat] = useState(false)
-    const [showUpgradeModal, setShowUpgradeModal] = useState(false)
     const [editingTitle, setEditingTitle] = useState(false)
     const [title, setTitle] = useState("")
     const [codeCopied, setCodeCopied] = useState(false)
@@ -43,13 +41,11 @@ function WebsiteEditor() {
     const [codeHistory, setCodeHistory] = useState([])
     const [historyIndex, setHistoryIndex] = useState(-1)
     const [showGithubExport, setShowGithubExport] = useState(false)
-    const [showSEO, setShowSEO] = useState(false)
     const [seoAnalysis, setSeoAnalysis] = useState(null)
     const [showComponents, setShowComponents] = useState(false)
     const [showAnimations, setShowAnimations] = useState(false)
     const [showIntegrations, setShowIntegrations] = useState(false)
     
-    const isPro = userData?.plan === "pro" || userData?.plan === "enterprise"
     const thinkingSteps = [
         "Understanding your request…",
         "Planning layout changes…",
@@ -94,10 +90,6 @@ function WebsiteEditor() {
     }
 
     const handleCopyCode = async () => {
-        if (!isPro) {
-            setShowUpgradeModal(true)
-            return
-        }
         await navigator.clipboard.writeText(code)
         setCodeCopied(true)
         toast.success('Code copied to clipboard!')
@@ -190,10 +182,6 @@ function WebsiteEditor() {
     const canRedo = historyIndex < codeHistory.length - 1
 
     const handleGithubExport = () => {
-        if (!isPro) {
-            setShowUpgradeModal(true)
-            return
-        }
         setShowGithubExport(true)
     }
 
@@ -204,13 +192,13 @@ function WebsiteEditor() {
 
 Generated with StackStudio - AI Website Builder
 
-## 🚀 Quick Start
+## Quick Start
 
 1. Clone this repository
 2. Open \`index.html\` in your browser
 3. That's it! No build process needed.
 
-## 📁 Project Structure
+## Project Structure
 
 \`\`\`
 ${repoName}/
@@ -218,7 +206,7 @@ ${repoName}/
 └── README.md          # This file
 \`\`\`
 
-## 🌐 Deploy to GitHub Pages
+## Deploy to GitHub Pages
 
 1. Go to your repository settings
 2. Navigate to "Pages" section
@@ -226,27 +214,27 @@ ${repoName}/
 4. Click "Save"
 5. Your site will be live at: \`https://[username].github.io/${repoName}\`
 
-## 📝 Customization
+## Customization
 
 This is a static HTML website. You can:
 - Edit the HTML directly in \`index.html\`
 - Modify styles in the \`<style>\` tag
 - Add JavaScript in the \`<script>\` tag
 
-## 🛠️ Built With
+## Built With
 
 - HTML5
 - CSS3
 - Vanilla JavaScript
 - StackStudio AI
 
-## 📄 License
+## License
 
 MIT License - Feel free to use this project however you'd like!
 
 ---
 
-Made with ❤️ using [StackStudio](https://stackstudio.com)
+Made with StackStudio (https://stackstudio.com)
 `
 
         const gitignore = `.DS_Store
@@ -284,7 +272,7 @@ git push -u origin main
     const handleSEOAnalysis = () => {
         const analysis = analyzeSEO(code)
         setSeoAnalysis(analysis)
-        setShowSEO(true)
+        toast.success('SEO analysis complete! Check the results.')
     }
 
     const handleFixSEO = async () => {
@@ -395,398 +383,335 @@ git push -u origin main
 
 
     return (
-        <div className='h-screen w-screen flex bg-black text-white overflow-hidden'>
-            <aside className='hidden lg:flex w-95 flex-col border-r border-white/10 bg-black/80'>
-                <Header />
-                <>
-                    <div className='flex-1 overflow-y-auto px-4 py-4 space-y-4'>
-                        {messages.map((m, i) => (
-                            <div
-                                key={i}
-                                className={`max-w-[85%] ${m.role === "user" ? "ml-auto" : "mr-auto"
-                                    }`}
-                            >
-
-                                <div
-                                    className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${m.role === "user"
-                                        ? "bg-white text-black"
-                                        : "bg-white/5 border border-white/10 text-zinc-200"
-                                        }`}
-                                >
-
-                                    {m.content}
-
-                                </div>
-
-                            </div>
-                        ))}
-
-                        {updateLoading &&
-
-                            <div className='max-w-[85%] mr-auto'>
-                                <div className='px-4 py-2.5 rounded-2xl text-xs bg-white/5 border border-white/10 text-zinc-400 italic'>{thinkingSteps[thinkingIndex]}</div>
-                            </div>}
-
-
-
-
-                    </div>
-                    <div className='p-3 border-t border-white/10'>
-                        <div className='flex gap-2'>
-                            <input placeholder='Describe Changes...' className='flex-1 resize-none rounded-2xl px-4 py-3 bg-white/5 border border-white/10 text-sm outline-none' onChange={(e) => setPrompt(e.target.value)} value={prompt} />
-                            <button className='px-4 py-3 rounded-2xl bg-white text-black' disabled={updateLoading} onClick={handleUpdate}><Send size={14} /></button>
-                        </div>
-                    </div>
-
-                </>
-            </aside>
-
-            <div className='flex-1 flex flex-col'>
-                <div className='h-14 px-4 flex justify-between items-center border-b border-white/10 bg-black/80'>
-                    <div className='flex items-center gap-3'>
-                        <span className='text-xs text-zinc-400'>Live Preview</span>
-                        
-                        {/* Device Preview Selector */}
-                        <div className='hidden md:flex items-center gap-1 px-2 py-1 rounded-lg bg-white/5 border border-white/10'>
-                            <button
-                                onClick={() => setPreviewMode('desktop')}
-                                className={`p-1.5 rounded transition ${previewMode === 'desktop' ? 'bg-white/20' : 'hover:bg-white/10'}`}
-                                title="Desktop View"
-                            >
-                                <Monitor size={14} />
-                            </button>
-                            <button
-                                onClick={() => setPreviewMode('tablet')}
-                                className={`p-1.5 rounded transition ${previewMode === 'tablet' ? 'bg-white/20' : 'hover:bg-white/10'}`}
-                                title="Tablet View"
-                            >
-                                <Tablet size={14} />
-                            </button>
-                            <button
-                                onClick={() => setPreviewMode('mobile')}
-                                className={`p-1.5 rounded transition ${previewMode === 'mobile' ? 'bg-white/20' : 'hover:bg-white/10'}`}
-                                title="Mobile View"
-                            >
-                                <Smartphone size={14} />
-                            </button>
-                            {previewMode !== 'desktop' && (
-                                <button
-                                    onClick={toggleOrientation}
-                                    className='p-1.5 rounded hover:bg-white/10 transition ml-1 border-l border-white/10'
-                                    title={`Rotate to ${previewOrientation === 'portrait' ? 'Landscape' : 'Portrait'}`}
-                                >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                                        <polyline points="7.5 4.21 12 6.81 16.5 4.21"/>
-                                        <polyline points="7.5 19.79 7.5 14.6 3 12"/>
-                                        <polyline points="21 12 16.5 14.6 16.5 19.79"/>
-                                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-                                        <line x1="12" y1="22.08" x2="12" y2="12"/>
-                                    </svg>
-                                </button>
-                            )}
-                        </div>
-
-                        {website.updatedAt && (
-                            <span className='text-xs text-zinc-500'>
-                                Last saved: {formatDistanceToNow(new Date(website.updatedAt), { addSuffix: true })}
-                            </span>
-                        )}
-                    </div>
-                    <div className='flex gap-2'>
-                        {website.deployed ?"": <button className='flex items-center gap-2 px-4 py-1.5 rounded-lg bg-linear-to-r from-indigo-500 to-purple-500 text-sm font-semibold hover:scale-105 transition'
-                        onClick={handleDeploy}
-                        ><Rocket size={14} /> Deploy</button>}
-                       
-                        <button 
-                            className='p-2 hover:bg-white/10 rounded-lg transition' 
-                            onClick={() => setShowThemes(true)}
-                            title="Change Theme"
-                        >
-                            <Palette size={18} />
-                        </button>
-
-                        <button 
-                            className='p-2 hover:bg-white/10 rounded-lg transition' 
-                            onClick={handleSEOAnalysis}
-                            title="SEO Analyzer"
-                        >
-                            <Search size={18} />
-                        </button>
-
-                        <button 
-                            className='p-2 hover:bg-white/10 rounded-lg transition' 
-                            onClick={() => setShowComponents(true)}
-                            title="Component Library"
-                        >
-                            <Grid3x3 size={18} />
-                        </button>
-
-                        <button 
-                            className='p-2 hover:bg-white/10 rounded-lg transition' 
-                            onClick={() => setShowAnimations(true)}
-                            title="Animation Library"
-                        >
-                            <Sparkles size={18} />
-                        </button>
-
-                        <button 
-                            className='p-2 hover:bg-white/10 rounded-lg transition' 
-                            onClick={() => setShowIntegrations(true)}
-                            title="Integrations Hub"
-                        >
-                            <Plug size={18} />
-                        </button>
-
-                        {/* Undo/Redo Buttons */}
-                        <div className='hidden md:flex items-center gap-1 px-1 py-1 rounded-lg bg-white/5 border border-white/10'>
-                            <button
-                                onClick={handleUndo}
-                                disabled={!canUndo}
-                                className={`p-1.5 rounded transition ${canUndo ? 'hover:bg-white/10' : 'opacity-30 cursor-not-allowed'}`}
-                                title="Undo (Ctrl+Z)"
-                            >
-                                <Undo size={14} />
-                            </button>
-                            <button
-                                onClick={handleRedo}
-                                disabled={!canRedo}
-                                className={`p-1.5 rounded transition ${canRedo ? 'hover:bg-white/10' : 'opacity-30 cursor-not-allowed'}`}
-                                title="Redo (Ctrl+Y)"
-                            >
-                                <Redo size={14} />
-                            </button>
-                        </div>
-
-                        <button className='p-2 lg:hidden' onClick={() => setShowChat(true)}><MessageSquare size={18} /></button>
-
-                        <button 
-                            className='p-2' 
-                            onClick={() => isPro ? setShowCode(true) : setShowUpgradeModal(true)}
-                            title={isPro ? "View Code" : "Pro feature"}
-                        >
-                            {isPro ? <Code2 size={18} /> : <Lock size={18} className='text-yellow-500' />}
-                        </button>
-                        
-                        <button 
-                            className='p-2'
-                            onClick={handleCopyCode}
-                            title={isPro ? "Copy Code" : "Pro feature"}
-                        >
-                            {codeCopied ? <Check size={18} className='text-green-500' /> : isPro ? <Copy size={18} /> : <Lock size={18} className='text-yellow-500' />}
-                        </button>
-                        
-                        <button 
-                            className='p-2'
-                            onClick={() => {
-                                if (!isPro) {
-                                    setShowUpgradeModal(true)
-                                    return
+        <div className='h-screen w-screen flex flex-col bg-black text-white overflow-hidden'>
+            {/* Top Header Bar */}
+            <div className='h-14 px-4 flex items-center justify-between border-b border-white/10 bg-black/90'>
+                <div className='flex items-center gap-3'>
+                    <button 
+                        onClick={() => navigate('/dashboard')}
+                        className='p-2 hover:bg-white/10 rounded-lg transition'
+                        title='Back to Dashboard'
+                    >
+                        <ArrowLeft size={18} />
+                    </button>
+                    
+                    {editingTitle ? (
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            onBlur={handleUpdateTitle}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleUpdateTitle()
+                                if (e.key === 'Escape') {
+                                    setEditingTitle(false)
+                                    setTitle(website.title)
                                 }
-                                const blob = new Blob([code], { type: 'text/html' })
-                                const url = URL.createObjectURL(blob)
-                                const a = document.createElement('a')
-                                a.href = url
-                                a.download = `${website.title || 'website'}.html`
-                                a.click()
-                                URL.revokeObjectURL(url)
-                                toast.success('Code downloaded!')
                             }}
-                            title={isPro ? "Download Code" : "Pro feature"}
-                        >
-                            {isPro ? <Download size={18} /> : <Lock size={18} className='text-yellow-500' />}
-                        </button>
-                        
-                        <button 
-                            className='p-2'
-                            onClick={handleGithubExport}
-                            title={isPro ? "Export to GitHub" : "Pro feature"}
-                        >
-                            {isPro ? <Github size={18} /> : <Lock size={18} className='text-yellow-500' />}
-                        </button>
+                            autoFocus
+                            className='font-semibold bg-white/5 border border-white/20 rounded px-3 py-1.5 outline-none focus:ring-2 focus:ring-white/30'
+                        />
+                    ) : (
+                        <div className='flex items-center gap-2'>
+                            <span className='font-semibold'>{website.title}</span>
+                            <button
+                                onClick={() => setEditingTitle(true)}
+                                className='p-1 hover:bg-white/10 rounded transition'
+                                title='Edit title'
+                            >
+                                <Pencil size={14} />
+                            </button>
+                        </div>
+                    )}
 
-                        <button className='p-2' onClick={() => setShowFullPreview(true)}><Monitor size={18} /></button>
-                    </div>
-
+                    {website.updatedAt && (
+                        <span className='text-xs text-zinc-500 hidden md:block'>
+                            Saved {formatDistanceToNow(new Date(website.updatedAt), { addSuffix: true })}
+                        </span>
+                    )}
                 </div>
 
-                <div className='flex-1 flex items-center justify-center bg-zinc-900 overflow-auto'>
-                    <div 
-                        className='transition-all duration-300 bg-white'
-                        style={{
-                            width: getPreviewDimensions().width,
-                            height: getPreviewDimensions().height,
-                            maxWidth: '100%',
-                            maxHeight: '100%',
-                            boxShadow: previewMode !== 'desktop' ? '0 20px 60px rgba(0,0,0,0.5)' : 'none',
-                            borderRadius: previewMode !== 'desktop' ? '12px' : '0'
-                        }}
-                    >
-                        <iframe 
-                            ref={iframeRef} 
-                            sandbox='allow-scripts allow-same-origin allow-forms' 
-                            className='w-full h-full'
-                            style={{ borderRadius: previewMode !== 'desktop' ? '12px' : '0' }}
-                        />
+                <div className='flex items-center gap-2'>
+                    {/* Undo/Redo */}
+                    <div className='hidden md:flex items-center gap-1 px-1 py-1 rounded-lg bg-white/5 border border-white/10'>
+                        <button
+                            onClick={handleUndo}
+                            disabled={!canUndo}
+                            className={`p-1.5 rounded transition ${canUndo ? 'hover:bg-white/10' : 'opacity-30 cursor-not-allowed'}`}
+                            title="Undo (Ctrl+Z)"
+                        >
+                            <Undo size={14} />
+                        </button>
+                        <button
+                            onClick={handleRedo}
+                            disabled={!canRedo}
+                            className={`p-1.5 rounded transition ${canRedo ? 'hover:bg-white/10' : 'opacity-30 cursor-not-allowed'}`}
+                            title="Redo (Ctrl+Y)"
+                        >
+                            <Redo size={14} />
+                        </button>
                     </div>
+
+                    <button 
+                        className='p-2 hover:bg-white/10 rounded-lg transition' 
+                        onClick={() => setShowThemes(true)}
+                        title="Themes"
+                    >
+                        <Palette size={18} />
+                    </button>
+
+                    <button 
+                        className='p-2 hover:bg-white/10 rounded-lg transition' 
+                        onClick={() => setShowComponents(true)}
+                        title="Components"
+                    >
+                        <Grid3x3 size={18} />
+                    </button>
+
+                    <button 
+                        className='p-2 hover:bg-white/10 rounded-lg transition' 
+                        onClick={() => setShowAnimations(true)}
+                        title="Animations"
+                    >
+                        <Sparkles size={18} />
+                    </button>
+
+                    <button 
+                        className='p-2 hover:bg-white/10 rounded-lg transition' 
+                        onClick={() => setShowIntegrations(true)}
+                        title="Integrations"
+                    >
+                        <Plug size={18} />
+                    </button>
+
+                    <button 
+                        className='p-2 hover:bg-white/10 rounded-lg transition'
+                        onClick={handleCopyCode}
+                        title="Copy Code"
+                    >
+                        {codeCopied ? <Check size={18} className='text-green-500' /> : <Copy size={18} />}
+                    </button>
+                    
+                    <button 
+                        className='p-2 hover:bg-white/10 rounded-lg transition'
+                        onClick={() => {
+                            const blob = new Blob([code], { type: 'text/html' })
+                            const url = URL.createObjectURL(blob)
+                            const a = document.createElement('a')
+                            a.href = url
+                            a.download = `${website.title || 'website'}.html`
+                            a.click()
+                            URL.revokeObjectURL(url)
+                            toast.success('Code downloaded!')
+                        }}
+                        title="Download"
+                    >
+                        <Download size={18} />
+                    </button>
+                    
+                    <button 
+                        className='p-2 hover:bg-white/10 rounded-lg transition'
+                        onClick={handleGithubExport}
+                        title="Export to GitHub"
+                    >
+                        <Github size={18} />
+                    </button>
+
+                    {website.deployed ? "" : (
+                        <button 
+                            className='flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-sm font-semibold hover:scale-105 transition'
+                            onClick={handleDeploy}
+                        >
+                            <Rocket size={14} /> Deploy
+                        </button>
+                    )}
                 </div>
             </div>
 
-            <AnimatePresence>
-                {showChat && (
-                    <motion.div
-                        initial={{ y: "100%" }}
-                        animate={{ y: 0 }}
-                        exit={{ y: "100%" }}
-                        className="fixed inset-0 z-[9999] bg-black flex flex-col"
-                    >
-                   <Header onclose={()=>setShowChat(false)}/>
-                   <>
-                    <div className='flex-1 overflow-y-auto px-4 py-4 space-y-4'>
-                        {messages.map((m, i) => (
-                            <div
-                                key={i}
-                                className={`max-w-[85%] ${m.role === "user" ? "ml-auto" : "mr-auto"
-                                    }`}
-                            >
-
-                                <div
-                                    className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${m.role === "user"
-                                        ? "bg-white text-black"
-                                        : "bg-white/5 border border-white/10 text-zinc-200"
-                                        }`}
-                                >
-
-                                    {m.content}
-
-                                </div>
-
-                            </div>
-                        ))}
-
-                        {updateLoading &&
-
-                            <div className='max-w-[85%] mr-auto'>
-                                <div className='px-4 py-2.5 rounded-2xl text-xs bg-white/5 border border-white/10 text-zinc-400 italic'>{thinkingSteps[thinkingIndex]}</div>
-                            </div>}
-
-
-
-
-                    </div>
-                    <div className='p-3 border-t border-white/10'>
-                        <div className='flex gap-2'>
-                            <input placeholder='Describe Changes...' className='flex-1 resize-none rounded-2xl px-4 py-3 bg-white/5 border border-white/10 text-sm outline-none' onChange={(e) => setPrompt(e.target.value)} value={prompt} />
-                            <button className='px-4 py-3 rounded-2xl bg-white text-black' disabled={updateLoading} onClick={handleUpdate}><Send size={14} /></button>
+            {/* Main Split View */}
+            <div className='flex-1 flex overflow-hidden'>
+                {/* Left: Code Editor */}
+                <div className='w-1/2 flex flex-col border-r border-white/10'>
+                    <div className='h-10 px-4 flex items-center justify-between border-b border-white/10 bg-black/50'>
+                        <div className='flex items-center gap-2'>
+                            <Code2 size={14} className='text-zinc-400' />
+                            <span className='text-xs text-zinc-400'>index.html</span>
                         </div>
+                        <button 
+                            className='p-1 hover:bg-white/10 rounded transition'
+                            onClick={() => setShowChat(!showChat)}
+                            title='Toggle AI Chat'
+                        >
+                            <MessageSquare size={14} />
+                        </button>
                     </div>
-
-                </>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-
-            <AnimatePresence>
-                {showCode && (
-                    <motion.div
-                        initial={{ x: "100%" }}
-                        animate={{ x: 0 }}
-                        exit={{ x: "100%" }}
-                        className="fixed inset-y-0 right-0 w-full lg:w-[45%] z-[9999] bg-[#1e1e1e] flex flex-col"
-                    >
-                        <div className='h-12 px-4 flex justify-between items-center border-b border-white/10 bg-[#1e1e1e]'>
-                            <span className='text-sm font-medium'>index.html</span>
-                            <button onClick={() => setShowCode(false)}><X size={18} /></button>
-                        </div>
+                    <div className='flex-1 overflow-hidden'>
                         <Editor
                             theme='vs-dark'
                             value={code}
                             language='html'
-                            onChange={(v) => isPro ? setCode(v) : null}
+                            onChange={(v) => {
+                                setCode(v)
+                                addToHistory(v)
+                            }}
                             options={{
-                                readOnly: !isPro,
-                                minimap: { enabled: isPro }
+                                minimap: { enabled: true },
+                                fontSize: 13,
+                                lineNumbers: 'on',
+                                scrollBeyondLastLine: false,
+                                automaticLayout: true,
+                                tabSize: 2,
+                                wordWrap: 'on'
                             }}
                         />
+                    </div>
+                </div>
 
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                {/* Right: Preview + Chat */}
+                <div className='w-1/2 flex flex-col'>
+                    {/* Preview Header */}
+                    <div className='h-10 px-4 flex items-center justify-between border-b border-white/10 bg-black/50'>
+                        <div className='flex items-center gap-3'>
+                            <span className='text-xs text-zinc-400'>Preview</span>
+                            
+                            {/* Device Preview Selector */}
+                            <div className='flex items-center gap-1 px-2 py-1 rounded-lg bg-white/5 border border-white/10'>
+                                <button
+                                    onClick={() => setPreviewMode('desktop')}
+                                    className={`p-1.5 rounded transition ${previewMode === 'desktop' ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                                    title="Desktop"
+                                >
+                                    <Monitor size={14} />
+                                </button>
+                                <button
+                                    onClick={() => setPreviewMode('tablet')}
+                                    className={`p-1.5 rounded transition ${previewMode === 'tablet' ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                                    title="Tablet"
+                                >
+                                    <Tablet size={14} />
+                                </button>
+                                <button
+                                    onClick={() => setPreviewMode('mobile')}
+                                    className={`p-1.5 rounded transition ${previewMode === 'mobile' ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                                    title="Mobile"
+                                >
+                                    <Smartphone size={14} />
+                                </button>
+                                {previewMode !== 'desktop' && (
+                                    <button
+                                        onClick={toggleOrientation}
+                                        className='p-1.5 rounded hover:bg-white/10 transition ml-1 border-l border-white/10'
+                                        title='Rotate'
+                                    >
+                                        <RotateCcw size={14} />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                        <button 
+                            className='p-1.5 hover:bg-white/10 rounded transition'
+                            onClick={() => setShowFullPreview(true)}
+                            title='Full Screen'
+                        >
+                            <Monitor size={14} />
+                        </button>
+                    </div>
 
+                    {/* Preview Area */}
+                    <div className='flex-1 flex flex-col bg-zinc-900 overflow-hidden'>
+                        {showChat ? (
+                            /* AI Chat Panel */
+                            <div className='flex-1 flex flex-col'>
+                                <div className='flex-1 overflow-y-auto px-4 py-4 space-y-4'>
+                                    {messages.map((m, i) => (
+                                        <div
+                                            key={i}
+                                            className={`max-w-[85%] ${m.role === "user" ? "ml-auto" : "mr-auto"}`}
+                                        >
+                                            <div
+                                                className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                                                    m.role === "user"
+                                                        ? "bg-white text-black"
+                                                        : "bg-white/5 border border-white/10 text-zinc-200"
+                                                }`}
+                                            >
+                                                {m.content}
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {updateLoading && (
+                                        <div className='max-w-[85%] mr-auto'>
+                                            <div className='px-4 py-2.5 rounded-2xl text-xs bg-white/5 border border-white/10 text-zinc-400 italic'>
+                                                {thinkingSteps[thinkingIndex]}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className='p-3 border-t border-white/10'>
+                                    <div className='flex gap-2'>
+                                        <input 
+                                            placeholder='Ask AI to modify your website...' 
+                                            className='flex-1 resize-none rounded-2xl px-4 py-3 bg-white/5 border border-white/10 text-sm outline-none' 
+                                            onChange={(e) => setPrompt(e.target.value)} 
+                                            value={prompt}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && !e.shiftKey) {
+                                                    e.preventDefault()
+                                                    handleUpdate()
+                                                }
+                                            }}
+                                        />
+                                        <button 
+                                            className='px-4 py-3 rounded-2xl bg-white text-black hover:bg-white/90 transition' 
+                                            disabled={updateLoading} 
+                                            onClick={handleUpdate}
+                                        >
+                                            <Send size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            /* Website Preview */
+                            <div className='flex-1 flex items-center justify-center overflow-auto p-4'>
+                                <div 
+                                    className='transition-all duration-300 bg-white'
+                                    style={{
+                                        width: getPreviewDimensions().width,
+                                        height: getPreviewDimensions().height,
+                                        maxWidth: '100%',
+                                        maxHeight: '100%',
+                                        boxShadow: previewMode !== 'desktop' ? '0 20px 60px rgba(0,0,0,0.5)' : 'none',
+                                        borderRadius: previewMode !== 'desktop' ? '12px' : '0'
+                                    }}
+                                >
+                                    <iframe 
+                                        ref={iframeRef} 
+                                        sandbox='allow-scripts allow-same-origin allow-forms' 
+                                        className='w-full h-full'
+                                        style={{ borderRadius: previewMode !== 'desktop' ? '12px' : '0' }}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Full Preview Modal */}
             <AnimatePresence>
                 {showFullPreview && (
-                    <motion.div
-                        className="fixed inset-0 z-[9999] bg-black"
-                    >
-                        <iframe className='w-full h-full bg-white' srcDoc={code} sandbox='allow-scripts allow-same-origin allow-forms'/>
-                        <button onClick={() => setShowFullPreview(false)} className='absolute top-4 right-4 p-2 bg-black/70 rounded-lg'><X /></button>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Upgrade Modal */}
-            <AnimatePresence>
-                {showUpgradeModal && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4"
-                        onClick={() => setShowUpgradeModal(false)}
+                        className="fixed inset-0 z-[9999] bg-black"
                     >
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
-                            className="relative max-w-md w-full p-8 rounded-3xl bg-gradient-to-br from-zinc-900 to-black border border-white/10"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <button
-                                onClick={() => setShowUpgradeModal(false)}
-                                className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-lg transition"
-                            >
-                                <X size={18} />
-                            </button>
-
-                            <div className="text-center mb-6">
-                                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center">
-                                    <Lock size={28} />
-                                </div>
-                                <h2 className="text-2xl font-bold mb-2">Upgrade to Pro</h2>
-                                <p className="text-zinc-400 text-sm">
-                                    Code editing and downloading are available in Pro and Enterprise plans
-                                </p>
-                            </div>
-
-                            <div className="space-y-3 mb-6">
-                                <div className="flex items-center gap-3 text-sm">
-                                    <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
-                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                    </div>
-                                    <span>View and edit source code</span>
-                                </div>
-                                <div className="flex items-center gap-3 text-sm">
-                                    <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
-                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                    </div>
-                                    <span>Download HTML files</span>
-                                </div>
-                                <div className="flex items-center gap-3 text-sm">
-                                    <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
-                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                    </div>
-                    <span>More credits for generation</span>
-                                </div>
-                            </div>
-
-                            <button
-                                onClick={() => navigate('/pricing')}
-                                className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 font-semibold hover:scale-105 transition"
-                            >
-                                View Plans
-                            </button>
-                        </motion.div>
+                        <iframe className='w-full h-full bg-white' srcDoc={code} sandbox='allow-scripts allow-same-origin allow-forms'/>
+                        <button onClick={() => setShowFullPreview(false)} className='absolute top-4 right-4 p-2 bg-black/70 hover:bg-black/90 rounded-lg transition'>
+                            <X />
+                        </button>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -857,9 +782,10 @@ git push -u origin main
                                 ))}
                             </div>
 
-                            <div className="mt-6 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                            <div className="mt-6 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-start gap-3">
+                                <Info size={16} className="text-blue-400 flex-shrink-0 mt-0.5" />
                                 <p className="text-xs text-blue-300">
-                                    💡 <strong>Tip:</strong> Themes apply CSS variables to your code. You can further customize colors by chatting with AI.
+                                    <strong>Tip:</strong> Themes apply CSS variables to your code. You can further customize colors by chatting with AI.
                                 </p>
                             </div>
                         </motion.div>
@@ -997,9 +923,10 @@ git push -u origin main`}
                                 </div>
                             </div>
 
-                            <div className="mt-6 p-4 rounded-xl bg-green-500/10 border border-green-500/20">
+                            <div className="mt-6 p-4 rounded-xl bg-green-500/10 border border-green-500/20 flex items-start gap-3">
+                                <CheckCircle size={16} className="text-green-400 flex-shrink-0 mt-0.5" />
                                 <p className="text-xs text-green-300">
-                                    ✅ <strong>Pro Tip:</strong> Your site will be available at https://[username].github.io/{website.title.toLowerCase().replace(/[^a-z0-9]/g, '-')}
+                                    <strong>Pro Tip:</strong> Your site will be available at https://[username].github.io/{website.title.toLowerCase().replace(/[^a-z0-9]/g, '-')}
                                 </p>
                             </div>
                         </motion.div>
@@ -1036,46 +963,6 @@ git push -u origin main`}
 
         </div>
     )
-
-    function Header({onclose}) {
-        return (
-            <div className='h-14 px-4 flex items-center justify-between border-b border-white/10'>
-                {editingTitle ? (
-                    <input
-                        type="text"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        onBlur={handleUpdateTitle}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleUpdateTitle()
-                            if (e.key === 'Escape') {
-                                setEditingTitle(false)
-                                setTitle(website.title)
-                            }
-                        }}
-                        autoFocus
-                        className='flex-1 font-semibold bg-white/5 border border-white/20 rounded px-2 py-1 outline-none focus:ring-2 focus:ring-white/30'
-                    />
-                ) : (
-                    <div className='flex items-center gap-2 flex-1'>
-                        <span className='font-semibold truncate'>{website.title}</span>
-                        <button
-                            onClick={() => setEditingTitle(true)}
-                            className='p-1 hover:bg-white/10 rounded transition'
-                            title='Edit title'
-                        >
-                            <Pencil size={14} />
-                        </button>
-                    </div>
-                )}
-                {onclose &&  <button onClick={onclose}><X size={18} color='white'/></button>}
-           
-            </div>
-        )
-    }
-
-
-
 }
 
 export default WebsiteEditor
