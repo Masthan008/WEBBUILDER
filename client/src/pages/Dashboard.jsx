@@ -197,3 +197,232 @@ function Dashboard() {
                         ))}
                     </motion.div>
                 )}
+
+                {/* Search and Filters */}
+                {!loading && websites && websites.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="mb-8 flex flex-col md:flex-row gap-4"
+                    >
+                        <div className="relative flex-1">
+                            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
+                            <input
+                                type="text"
+                                placeholder="Search your websites..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition placeholder:text-zinc-500"
+                            />
+                        </div>
+                        <div className="flex gap-3">
+                            <select
+                                value={filterBy}
+                                onChange={(e) => setFilterBy(e.target.value)}
+                                className="px-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:ring-2 focus:ring-indigo-500/50 transition cursor-pointer"
+                            >
+                                <option value="all">All Websites</option>
+                                <option value="deployed">Deployed</option>
+                                <option value="not-deployed">Not Deployed</option>
+                            </select>
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="px-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:ring-2 focus:ring-indigo-500/50 transition cursor-pointer"
+                            >
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                                <option value="name">Name (A-Z)</option>
+                            </select>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* Loading State */}
+                {loading && (
+                    <div className="mt-24 text-center">
+                        <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full mx-auto mb-4"
+                        ></motion.div>
+                        <p className="text-zinc-400">Loading your websites...</p>
+                    </div>
+                )}
+
+                {/* Error State */}
+                {error && !loading && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="mt-24 text-center"
+                    >
+                        <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                            <AlertCircle size={32} className="text-red-400" />
+                        </div>
+                        <p className="text-red-400">{error}</p>
+                    </motion.div>
+                )}
+
+                {/* Empty State */}
+                {websites?.length === 0 && !loading && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="mt-24 text-center"
+                    >
+                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center mx-auto mb-6">
+                            <Sparkles size={40} className="text-indigo-400" />
+                        </div>
+                        <h3 className="text-2xl font-bold mb-3">No websites yet</h3>
+                        <p className="text-zinc-400 mb-8">Create your first AI-powered website in minutes</p>
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="px-8 py-3 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 font-semibold shadow-lg shadow-indigo-500/25"
+                            onClick={() => navigate("/generate")}
+                        >
+                            Create Your First Website
+                        </motion.button>
+                    </motion.div>
+                )}
+
+                {/* No Search Results */}
+                {!loading && !error && websites?.length > 0 && filteredWebsites.length === 0 && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="mt-24 text-center text-zinc-400"
+                    >
+                        <Search size={48} className="mx-auto mb-4 opacity-50" />
+                        <p>No websites match your search</p>
+                    </motion.div>
+                )}
+
+                {/* Websites Grid */}
+                {!loading && !error && filteredWebsites.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                        className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6'
+                    >
+                        {filteredWebsites.map((w, i) => {
+                            const copied = copiedId === w._id
+                            const deleting = deletingId === w._id
+
+                            return (
+                                <motion.div
+                                    key={w._id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: i * 0.05 }}
+                                    whileHover={{ y: -8 }}
+                                    className="group relative rounded-2xl bg-white/5 border border-white/10 overflow-hidden hover:border-indigo-500/50 transition-all duration-300"
+                                >
+                                    {/* Preview */}
+                                    <div
+                                        className='relative h-48 bg-black cursor-pointer overflow-hidden'
+                                        onClick={() => navigate(`/editor/${w._id}`)}
+                                    >
+                                        <iframe
+                                            srcDoc={w.latestCode}
+                                            className='absolute inset-0 w-[140%] h-[140%] scale-[0.72] origin-top-left pointer-events-none bg-white'
+                                        />
+                                        <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center'>
+                                            <span className='px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-sm font-medium'>
+                                                Open Editor
+                                            </span>
+                                        </div>
+                                        
+                                        {/* Deployed Badge */}
+                                        {w.deployed && (
+                                            <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-green-500/20 border border-green-500/30 text-green-400 text-xs font-medium flex items-center gap-1">
+                                                <Check size={12} />
+                                                Deployed
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className='p-5 flex flex-col gap-4'>
+                                        <div>
+                                            <h3 className='text-base font-semibold line-clamp-2 mb-2 group-hover:text-indigo-400 transition-colors'>
+                                                {w.title}
+                                            </h3>
+                                            <p className='text-xs text-zinc-500 flex items-center gap-2'>
+                                                <Clock size={12} />
+                                                Updated {new Date(w.updatedAt).toLocaleDateString()}
+                                            </p>
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className='flex gap-2'>
+                                            {!w.deployed ? (
+                                                <motion.button
+                                                    whileHover={{ scale: 1.02 }}
+                                                    whileTap={{ scale: 0.98 }}
+                                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-indigo-500 to-purple-500 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all"
+                                                    onClick={() => handleDeploy(w._id)}
+                                                >
+                                                    <Rocket size={16} />
+                                                    Deploy
+                                                </motion.button>
+                                            ) : (
+                                                <motion.button
+                                                    whileHover={{ scale: 1.02 }}
+                                                    whileTap={{ scale: 0.98 }}
+                                                    onClick={() => handleCopy(w)}
+                                                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                                                        copied
+                                                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                                            : "bg-white/10 hover:bg-white/20 border border-white/10"
+                                                    }`}
+                                                >
+                                                    {copied ? (
+                                                        <>
+                                                            <Check size={14} />
+                                                            Copied!
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Share2 size={14} />
+                                                            Share
+                                                        </>
+                                                    )}
+                                                </motion.button>
+                                            )}
+
+                                            <motion.button
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                onClick={() => handleDelete(w._id)}
+                                                disabled={deleting}
+                                                className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                                title="Delete website"
+                                            >
+                                                {deleting ? (
+                                                    <motion.div
+                                                        animate={{ rotate: 360 }}
+                                                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </motion.div>
+                                                ) : (
+                                                    <Trash2 size={16} />
+                                                )}
+                                            </motion.button>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )
+                        })}
+                    </motion.div>
+                )}
+            </div>
+        </div>
+    )
+}
+
+export default Dashboard
