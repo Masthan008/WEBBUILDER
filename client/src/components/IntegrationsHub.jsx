@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { Search, Plug, X, ExternalLink } from 'lucide-react'
+import { Search, Plug, X, ExternalLink, Info, FileText, AlertTriangle, Clock } from 'lucide-react'
 import { useState } from 'react'
 import { integrationCategories, getIntegrationsByCategory, searchIntegrations, getDifficultyColor } from '../data/integrations'
 
@@ -137,7 +137,10 @@ function IntegrationsHub({ isOpen, onClose, onSelectIntegration }) {
                                                     }`}>
                                                         {integration.difficulty}
                                                     </span>
-                                                    <span className="text-zinc-500">⏱️ {integration.setupTime}</span>
+                                                    <span className="text-zinc-500 flex items-center gap-1">
+                                                        <Clock size={12} />
+                                                        {integration.setupTime}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </motion.div>
@@ -154,9 +157,10 @@ function IntegrationsHub({ isOpen, onClose, onSelectIntegration }) {
                             </div>
                         )}
 
-                        <div className="mt-6 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                        <div className="mt-6 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-start gap-3">
+                            <Info size={16} className="text-blue-400 flex-shrink-0 mt-0.5" />
                             <p className="text-xs text-blue-300">
-                                💡 <strong>Tip:</strong> Click any integration to see setup instructions. AI will add the integration code to your website.
+                                <strong>Tip:</strong> Click any integration to see setup instructions. AI will add the integration code to your website.
                             </p>
                         </div>
                     </>
@@ -184,7 +188,8 @@ function IntegrationsHub({ isOpen, onClose, onSelectIntegration }) {
                         {/* Setup Instructions */}
                         <div className="mb-6 p-6 rounded-xl bg-white/5 border border-white/10">
                             <h3 className="font-semibold mb-4 flex items-center gap-2">
-                                📋 Setup Instructions
+                                <FileText size={18} />
+                                Setup Instructions
                             </h3>
                             <ol className="space-y-3">
                                 {selectedIntegration.setupInstructions.map((instruction, index) => (
@@ -230,9 +235,10 @@ function IntegrationsHub({ isOpen, onClose, onSelectIntegration }) {
                             Add {selectedIntegration.name} to Website
                         </button>
 
-                        <div className="mt-4 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
+                        <div className="mt-4 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-start gap-3">
+                            <AlertTriangle size={16} className="text-yellow-400 flex-shrink-0 mt-0.5" />
                             <p className="text-xs text-yellow-300">
-                                ⚠️ <strong>Note:</strong> You'll need to provide your {selectedIntegration.apiKeyLabel || 'API credentials'} when AI adds this integration.
+                                <strong>Note:</strong> You'll need to provide your {selectedIntegration.apiKeyLabel || 'API credentials'} when AI adds this integration.
                             </p>
                         </div>
                     </>

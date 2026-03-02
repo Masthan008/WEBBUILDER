@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { Grid3x3, Search, X } from 'lucide-react'
+import { Grid3x3, Search, X, Info } from 'lucide-react'
 import { useState } from 'react'
 import { componentCategories, getComponentsByCategory, searchComponents } from '../data/components'
 
@@ -121,9 +121,10 @@ function ComponentLibrary({ isOpen, onClose, onSelectComponent }) {
                     </div>
                 )}
 
-                <div className="mt-6 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                <div className="mt-6 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-start gap-3">
+                    <Info size={16} className="text-blue-400 flex-shrink-0 mt-0.5" />
                     <p className="text-xs text-blue-300">
-                        💡 <strong>Tip:</strong> Click any component to load its prompt. AI will add it to your website while preserving existing content.
+                        <strong>Tip:</strong> Click any component to load its prompt. AI will add it to your website while preserving existing content.
                     </p>
                 </div>
             </motion.div>
