@@ -19,9 +19,9 @@ const providers = {
         apiKeyEnv: "GROQ_API_KEY"
     },
     nvidia: {
-        name: "NVIDIA DeepSeek",
+        name: "NVIDIA",
         url: "https://integrate.api.nvidia.com/v1/chat/completions",
-        model: "deepseek-ai/deepseek-v3.1-terminus",
+        model: "nvidia/llama-3.1-nemotron-70b-instruct",
         apiKeyEnv: "NVIDIA_API_KEY"
     }
 }
